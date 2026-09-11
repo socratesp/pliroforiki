@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Πληροφορική Κατέυθυνσης</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg: #0b1020;
+    --panel: rgba(255, 255, 255, .045);
+    --line: rgba(255, 255, 255, .09);
+    --txt: #e6ecff;
+    --muted: #8fa1c4;
+    --faint: #5f7295;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--txt);
+    background:
+      radial-gradient(circle at 10% 6%, rgba(56, 189, 248, .16), transparent 40%),
+      radial-gradient(circle at 92% 94%, rgba(168, 85, 247, .16), transparent 40%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ LAYOUT ============ */
+  .app {
+    display: grid;
+    grid-template-columns: 276px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 26px 16px 30px;
+    background: rgba(9, 14, 30, .74);
+    border-right: 1px solid var(--line);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 8px 22px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 11px;
+    color: #06101f;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa 60%, #f472b6);
+    box-shadow: 0 8px 22px -8px rgba(96, 165, 250, .9);
+  }
+
+  .brand-mark svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: .92rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    line-height: 1.25;
+  }
+
+  /* ============ COLLAPSIBLE GROUPS ============ */
+  .nav-group {
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+
+  .nav-group-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    margin: 0;
+    padding: 11px 13px;
+    font: inherit;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    text-align: left;
+    color: #b6c5e2;
+    background: rgba(255, 255, 255, .035);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background .16s, color .16s, border-color .16s;
+  }
+
+  .nav-group-head:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .075);
+    border-color: rgba(129, 160, 255, .3);
+  }
+
+  .nav-group-head .chev {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    color: #6d82a8;
+    transition: transform .24s ease, color .16s;
+  }
+
+  .nav-group-head:hover .chev { color: #a8bde0; }
+
+  .nav-group.is-open > .nav-group-head {
+    color: #fff;
+    border-color: rgba(129, 160, 255, .35);
+    background: linear-gradient(90deg, rgba(96, 165, 250, .16), rgba(167, 139, 250, .1));
+  }
+
+  .nav-group.is-open > .nav-group-head .chev { transform: rotate(0deg); }
+  .nav-group:not(.is-open) > .nav-group-head .chev { transform: rotate(-90deg); }
+
+  /* Notes group gets an amber accent */
+  .nav-group[data-group="notes"].is-open > .nav-group-head {
+    border-color: rgba(251, 191, 36, .38);
+    background: linear-gradient(90deg, rgba(251, 191, 36, .14), rgba(251, 191, 36, .05));
+  }
+  .nav-group[data-group="notes"].is-open > .nav-group-head .chev { color: var(--amber); }
+
+  /* --- Submenu wrapper --- */
+  .nav-sub-group {
+    margin: 0 0 0 16px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, .1);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height .3s ease, opacity .22s ease, margin-top .24s ease;
+  }
+
+  .nav-group.is-open > .nav-sub-group {
+    max-height: 800px;
+    opacity: 1;
+    margin-top: 8px;
+  }
+
+  /* ============ NESTED (SUB) GROUP ============ */
+  .nav-group.nested {
+    margin-top: 2px;
+    margin-bottom: 0;
+  }
+
+  .nav-group.nested > .nav-group-head {
+    padding: 8px 11px;
+    font-size: .68rem;
+    font-weight: 650;
+    letter-spacing: .1em;
+    background: transparent;
+    border-color: transparent;
+    color: #a3b4d2;
+    border-radius: 9px;
+  }
+
+  .nav-group.nested > .nav-group-head:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .05);
+    border-color: transparent;
+  }
+
+  .nav-group.nested.is-open > .nav-group-head {
+    color: #dbe6ff;
+    background: rgba(255, 255, 255, .045);
+    border-color: transparent;
+  }
+
+  .nav-group.nested > .nav-group-head .chev {
+    width: 11px;
+    height: 11px;
+    color: #5a6d92;
+  }
+
+  .nav-group.nested.is-open > .nav-group-head .chev { color: #8fa1c4; }
+
+  .nav-group.nested > .nav-sub-group {
+    border-left-color: rgba(255, 255, 255, .06);
+    margin-left: 10px;
+    padding-left: 10px;
+  }
+
+  /* --- Navigation items --- */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 11px 13px;
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 550;
+    text-align: left;
+    color: #b6c5e2;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background .16s, color .16s, border-color .16s;
+  }
+
+  .nav-item:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .055);
+  }
+
+  .nav-item.is-active {
+    color: #fff;
+    background: linear-gradient(90deg, rgba(96, 165, 250, .22), rgba(167, 139, 250, .14));
+    border-color: rgba(129, 160, 255, .35);
+  }
+
+  .nav-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: #3d4d6d;
+    transition: background .16s, box-shadow .16s;
+  }
+
+  .nav-item.is-active .nav-dot {
+    background: #60a5fa;
+    box-shadow: 0 0 10px #60a5fa;
+  }
+
+  .nav-item[data-section="hex"].is-active .nav-dot {
+    background: #a78bfa;
+    box-shadow: 0 0 10px #a78bfa;
+  }
+
+  .nav-item[data-section^="notes"].is-active .nav-dot {
+    background: var(--amber);
+    box-shadow: 0 0 10px var(--amber);
+  }
+
+  .nav-sub {
+    font-size: .83rem;
+    padding: 9px 12px;
+    border-radius: 9px;
+  }
+
+  .nav-sub .nav-dot { width: 6px; height: 6px; }
+
+  /* ============ CONTENT ============ */
+  .content {
+    display: flex;
+    flex-direction: column;
+    padding: 46px 40px 40px;
+    max-width: 860px;
+    min-height: 100vh;
+  }
+
+  .panels { flex: 1; }
+
+  .panel { display: none; animation: fade .28s ease; }
+  .panel.is-active { display: block; }
+
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #6d82a8;
+  }
+
+  .panel-head h2 {
+    margin: 0 0 8px;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    letter-spacing: -.02em;
+    background: linear-gradient(90deg, #7dd3fc, #a78bfa 55%, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lead {
+    margin: 0 0 26px;
+    font-size: .93rem;
+    color: var(--muted);
+    max-width: 56ch;
+  }
+
+  /* ============ FOOTER ============ */
+  .site-footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: .8rem;
+    letter-spacing: .02em;
+    color: #6d82a8;
+  }
+
+  .site-footer .name {
+    color: #b6c5e2;
+    font-weight: 650;
+  }
+
+  .site-footer .sep {
+    margin: 0 8px;
+    color: #3d4d6d;
+  }
+
+  .site-footer .role {
+    color: var(--faint);
+  }
+
+  /* ============ EXERCISE CARD ============ */
+  .exercise {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 26px 22px;
+    border-radius: 20px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 26px 52px -28px rgba(0, 0, 0, .95);
+  }
+
+  .exercise::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #38bdf8, #3b82f6);
+  }
+
+  .exercise[data-type="hex"]::before {
+    background: linear-gradient(90deg, #a78bfa, #ec4899);
+  }
+
+  /* ---- Prompt ---- */
+  .prompt {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: #b9c8e4;
+  }
+
+  .prompt strong { color: #fff; font-weight: 650; }
+
+  .prompt .num {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #fff;
+    background: rgba(255, 255, 255, .075);
+    border: 1px solid rgba(255, 255, 255, .11);
+    padding: 2px 13px;
+    border-radius: 9px;
+  }
+
+  .prompt sub {
+    font-size: .68em;
+    color: #7f92b8;
+    margin-left: 3px;
+  }
+
+  /* ---- Answer row ---- */
+  .answer-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .input-wrap { position: relative; flex: 1; min-width: 0; }
+
+  .answer-input {
+    width: 100%;
+    padding: 14px 50px 14px 16px;
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    letter-spacing: .06em;
+    color: #eaf1ff;
+    background: rgba(6, 12, 28, .72);
+    border: 1px solid rgba(255, 255, 255, .13);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s, background .18s;
+  }
+
+  .answer-input::placeholder {
+    color: #4a5b7c;
+    letter-spacing: 0;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .answer-input:focus {
+    border-color: #60a5fa;
+    background: rgba(6, 12, 28, .95);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, .2);
+  }
+
+  .answer-input[readonly] { cursor: default; }
+
+  .answer-input.invalid {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, .16);
+  }
+
+  .input-wrap.ok .answer-input {
+    border-color: rgba(74, 222, 128, .75);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .16);
+  }
+
+  .input-wrap.bad .answer-input {
+    border-color: rgba(248, 113, 113, .75);
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, .16);
+  }
+
+  /* ---- Status icon (tick / cross) ---- */
+  .status-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%) scale(.4);
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transition: opacity .18s, transform .22s cubic-bezier(.2, 1.6, .4, 1);
+    pointer-events: none;
+  }
+
+  .status-icon .ic { display: none; width: 20px; height: 20px; }
+
+  .status-icon.ok,
+  .status-icon.bad {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .status-icon.ok  { color: var(--green); }
+  .status-icon.bad { color: var(--red); }
+  .status-icon.ok  .ic.ok  { display: block; }
+  .status-icon.bad .ic.bad { display: block; }
+
+  /* ---- Buttons ---- */
+  .btn {
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 650;
+    padding: 14px 22px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .14s, box-shadow .18s, background .18s, color .18s, opacity .18s;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn.primary {
+    color: #06101f;
+    background: linear-gradient(135deg, #7dd3fc, #60a5fa);
+    box-shadow: 0 12px 26px -12px rgba(96, 165, 250, .95);
+  }
+
+  .btn.primary:hover:not(:disabled) { box-shadow: 0 16px 30px -12px rgba(96, 165, 250, 1); }
+
+  .btn.primary:disabled {
+    cursor: default;
+    opacity: .45;
+    box-shadow: none;
+  }
+
+  .btn.ghost {
+    color: #b6c5e2;
+    background: rgba(255, 255, 255, .05);
+    border-color: var(--line);
+  }
+
+  .btn.ghost:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+
+  .btn.ghost.pulse {
+    color: #06101f;
+    background: linear-gradient(135deg, #a7f3d0, #4ade80);
+    border-color: transparent;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .5); }
+    50%      { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+  }
+
+  /* ---- Feedback ---- */
+  .feedback {
+    min-height: 58px;
+    margin-top: 18px;
+    font-size: .9rem;
+  }
+
+  .feedback .msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 650;
+  }
+
+  .feedback .msg .ic { width: 17px; height: 17px; flex: none; }
+
+  .feedback.ok  .msg { color: var(--green); }
+  .feedback.bad .msg { color: var(--red); }
+  .feedback.warn .msg { color: var(--amber); font-weight: 550; }
+
+  .feedback .answer-line {
+    margin-top: 9px;
+    font-size: .875rem;
+    color: #9fb0d0;
+  }
+
+  .feedback .answer-line code {
+    font-family: var(--mono);
+    font-size: .95rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: #fff;
+    background: rgba(248, 113, 113, .14);
+    border: 1px solid rgba(248, 113, 113, .3);
+    padding: 3px 10px;
+    border-radius: 7px;
+  }
+
+  .feedback .answer-line sub {
+    font-size: .68em;
+    color: #7f92b8;
+    margin-left: 2px;
+  }
+
+  .ex-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  /* ============ NOTES ============ */
+  .notes { padding: 2px 2px 10px; }
+
+  .notes h3 {
+    position: relative;
+    margin: 34px 0 14px;
+    padding-left: 15px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -.005em;
+    color: #dbe6ff;
+  }
+
+  .notes h3:first-child { margin-top: 4px; }
+
+  .notes h3::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #60a5fa, #a78bfa);
+  }
+
+  .notes p {
+    margin: 0 0 15px;
+    font-size: .92rem;
+    line-height: 1.78;
+    color: #a9bbda;
+  }
+
+  .notes strong { color: #eaf1ff; font-weight: 650; }
+
+  .notes .mono {
+    font-family: var(--mono);
+    font-size: .92em;
+    letter-spacing: .04em;
+    color: #cfe0ff;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .09);
+    padding: 1px 7px;
+    border-radius: 6px;
+  }
+
+  /* place-value table */
+  .pv {
+    width: 100%;
+    margin: 4px 0 20px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--mono);
+    font-size: .88rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .pv th,
+  .pv td {
+    padding: 10px 6px;
+    text-align: center;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pv tr:last-child th,
+  .pv tr:last-child td { border-bottom: none; }
+  .pv th:last-child,
+  .pv td:last-child { border-right: none; }
+
+  .pv thead th {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #8fa1c4;
+    background: rgba(255, 255, 255, .05);
+  }
+
+  .pv tbody th {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #8fa1c4;
+    background: rgba(255, 255, 255, .03);
+    white-space: nowrap;
+  }
+
+  .pv td { color: #cfe0ff; }
+  .pv td.hi { color: #7dd3fc; font-weight: 700; }
+
+  /* calculation block */
+  .calc {
+    margin: 0 0 20px;
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: .875rem;
+    line-height: 2;
+    color: #b9c8e4;
+    background: rgba(6, 12, 28, .62);
+    border: 1px solid var(--line);
+    border-left: 3px solid #60a5fa;
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  .calc.hex { border-left-color: #a78bfa; }
+
+  .calc .title {
+    margin-bottom: 10px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #6d82a8;
+  }
+
+  .calc .rem { color: var(--amber); }
+  .calc .res { color: var(--green); font-weight: 700; }
+  .calc .rule { color: #3d4d6d; }
+
+  /* callout */
+  .callout {
+    display: flex;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    font-size: .875rem;
+    line-height: 1.7;
+    color: #b9c8e4;
+    background: rgba(251, 191, 36, .07);
+    border: 1px solid rgba(251, 191, 36, .22);
+    border-radius: 12px;
+  }
+
+  .callout .ic {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    color: var(--amber);
+  }
+
+  .callout strong { color: #fde68a; font-weight: 650; }
+
+  .callout .step-table {
+    width: 100%;
+    margin: 12px 0 14px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--mono);
+    font-size: .8rem;
+    border: 1px solid rgba(251, 191, 36, .25);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .callout .step-table th,
+  .callout .step-table td {
+    padding: 7px 10px;
+    text-align: center;
+    border-right: 1px solid rgba(251, 191, 36, .18);
+    border-bottom: 1px solid rgba(251, 191, 36, .18);
+    color: #dbe6ff;
+  }
+
+  .callout .step-table tr:last-child th,
+  .callout .step-table tr:last-child td { border-bottom: none; }
+  .callout .step-table th:last-child,
+  .callout .step-table td:last-child { border-right: none; }
+
+  .callout .step-table thead th {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #d9a94a;
+    background: rgba(251, 191, 36, .07);
+  }
+
+  .callout .step-table tbody td:last-child { color: var(--green); font-weight: 700; }
+
+  .callout .flow {
+    display: block;
+    margin: 10px 0 12px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: .8rem;
+    line-height: 1.9;
+    color: #cfe0ff;
+    background: rgba(6, 12, 28, .55);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 9px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .callout .flow .arrow { color: var(--amber); margin: 0 4px; }
+
+  .callout ul {
+    margin: 8px 0 12px;
+    padding-left: 20px;
+  }
+
+  .callout ul li {
+    margin-bottom: 6px;
+    line-height: 1.7;
+  }
+
+  .callout .subhead {
+    display: block;
+    margin: 14px 0 6px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #d9a94a;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 880px) {
+    .app { grid-template-columns: 1fr; }
+
+    .sidebar {
+      position: static;
+      height: auto;
+      padding: 18px 16px 20px;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { padding-bottom: 16px; margin-bottom: 14px; }
+
+    .nav { display: block; }
+
+    .nav-group { margin-top: 12px; }
+
+    .nav-item { width: 100%; }
+
+    .content { padding: 30px 18px 30px; min-height: 0; }
+  }
+
+  @media (max-width: 520px) {
+    .exercise { padding: 22px 16px 18px; }
+    .answer-row { flex-direction: column; }
+    .btn.primary { width: 100%; }
+    .prompt .num { font-size: 1.15rem; }
+    .pv { font-size: .74rem; }
+    .pv th, .pv td { padding: 8px 3px; }
+    .callout { flex-direction: column; }
+    .callout .step-table { font-size: .72rem; }
+    .callout .step-table th,
+    .callout .step-table td { padding: 6px 5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <path d="M8 21h8M12 17v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Πληροφορική Κατέυθυνσης</h1>
+      </div>
+    </div>
+
+    <nav class="nav">
+
+      <!-- ==================== ΣΗΜΕΙΩΣΕΙΣ ==================== -->
+      <div class="nav-group is-open" data-group="notes">
+        <button class="nav-group-head" type="button"
+                aria-expanded="true" aria-controls="sub-notes">
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+          Σημειώσεις
+        </button>
+
+        <div class="nav-sub-group" id="sub-notes">
+
+          <!-- Nested: Numerical Conversions -->
+          <div class="nav-group nested is-open" data-group="notes-conv">
+            <button class="nav-group-head" type="button"
+                    aria-expanded="true" aria-controls="sub-notes-conv">
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              Numerical Conversions
+            </button>
+
+            <div class="nav-sub-group" id="sub-notes-conv">
+              <button class="nav-item nav-sub" type="button" data-section="notes-bin">
+                <span class="nav-dot"></span> Binary ⇄ Decimal
+              </button>
+
+              <button class="nav-item nav-sub" type="button" data-section="notes-hex">
+                <span class="nav-dot"></span> Hexadecimal ⇄ Decimal
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== ΑΚΗΣΕΙΣ ==================== -->
+      <div class="nav-group is-open" data-group="exercises">
+        <button class="nav-group-head" type="button"
+                aria-expanded="true" aria-controls="sub-exercises">
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+          Ακήσεις
+        </button>
+
+        <div class="nav-sub-group" id="sub-exercises">
+
+          <!-- Nested: Numerical Conversions -->
+          <div class="nav-group nested is-open" data-group="ex-conv">
+            <button class="nav-group-head" type="button"
+                    aria-expanded="true" aria-controls="sub-ex-conv">
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              Numerical Conversions
+            </button>
+
+            <div class="nav-sub-group" id="sub-ex-conv">
+              <button class="nav-item nav-sub is-active" type="button" data-section="bin">
+                <span class="nav-dot"></span> Binary ⇄ Decimal
+              </button>
+
+              <button class="nav-item nav-sub" type="button" data-section="hex">
+                <span class="nav-dot"></span> Hexadecimal ⇄ Decimal
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </nav>
+  </aside>
+
+  <!-- ================= CONTENT ================= -->
+  <main class="content">
+
+    <div class="panels">
+
+      <!-- ---------- EXERCISE: BINARY ---------- -->
+      <section class="panel is-active" id="panel-bin">
+        <header class="panel-head">
+          <p class="eyebrow">Exercise</p>
+          <h2>Binary ⇄ Decimal</h2>
+          <p class="lead">A random number appears in one base. Type it in the other and hit Check — questions keep coming.</p>
+        </header>
+
+        <div class="exercise" data-type="bin">
+          <p class="prompt"></p>
+
+          <div class="answer-row">
+            <div class="input-wrap">
+              <input class="answer-input" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+              <span class="status-icon">
+                <svg class="ic ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <svg class="ic bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <button class="btn primary check-btn" type="button">Check</button>
+          </div>
+
+          <div class="feedback" role="status" aria-live="polite"></div>
+
+          <div class="ex-actions">
+            <button class="btn ghost new-btn" type="button">New question</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- EXERCISE: HEX ---------- -->
+      <section class="panel" id="panel-hex">
+        <header class="panel-head">
+          <p class="eyebrow">Exercise</p>
+          <h2>Hexadecimal ⇄ Decimal</h2>
+          <p class="lead">A random number appears in one base. Type it in the other and hit Check — questions keep coming.</p>
+        </header>
+
+        <div class="exercise" data-type="hex">
+          <p class="prompt"></p>
+
+          <div class="answer-row">
+            <div class="input-wrap">
+              <input class="answer-input" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+              <span class="status-icon">
+                <svg class="ic ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <svg class="ic bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <button class="btn primary check-btn" type="button">Check</button>
+          </div>
+
+          <div class="feedback" role="status" aria-live="polite"></div>
+
+          <div class="ex-actions">
+            <button class="btn ghost new-btn" type="button">New question</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- NOTES: BINARY ---------- -->
+      <section class="panel" id="panel-notes-bin">
+        <header class="panel-head">
+          <p class="eyebrow">Σημειώσεις</p>
+          <h2>Binary ⇄ Decimal</h2>
+          <p class="lead">Binary is a base‑2 system: it uses only the digits 0 and 1. Decimal is base 10, using 0–9.</p>
+        </header>
+
+        <article class="notes">
+
+          <h3>Binary → Decimal</h3>
+          <p>
+            Each binary digit (a <strong>bit</strong>) has a <strong>place value</strong> — a power of 2 —
+            determined by its position. Positions are counted from the right, starting at 2⁰ = 1.
+          </p>
+
+          <table class="pv">
+            <thead>
+              <tr>
+                <th>Position</th><th>7</th><th>6</th><th>5</th><th>4</th>
+                <th>3</th><th>2</th><th>1</th><th>0</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Place value</th>
+                <td>128</td><td>64</td><td>32</td><td>16</td>
+                <td>8</td><td>4</td><td>2</td><td>1</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            To convert: multiply every bit by its place value, then add all the results together.
+            Bits equal to <span class="mono">0</span> contribute nothing.
+          </p>
+
+          <div class="calc">
+            <div class="title">Example — 1011 in binary</div>
+            <div>1 × 2³ = 8</div>
+            <div>0 × 2² = 0</div>
+            <div>1 × 2¹ = 2</div>
+            <div>1 × 2⁰ = 1</div>
+            <div class="rule">────────────────</div>
+            <div>8 + 0 + 2 + 1 = <span class="res">11</span></div>
+          </div>
+
+          <div class="callout">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+            <div>
+              <strong>Shortcut — “double and add” (Horner's method):</strong>
+              read the bits <em>left to right</em>. Start with <span class="mono">value = 0</span>,
+              then for each bit do:
+
+              <span class="flow">value = value × 2 + bit</span>
+
+              <span class="subhead">Why it works</span>
+              Each <span class="mono">× 2</span> shifts every existing bit one place to the left
+              in the place-value table (8s become 16s, 4s become 8s, and so on).
+              Adding the new bit then fills the empty <strong>units (2⁰) position</strong>.
+              So you build the number one place at a time — no need to pre-compute powers of 2.
+
+              <span class="subhead">Step-by-step for 1011</span>
+              Bits are read in this order: <span class="mono">1, 0, 1, 1</span>
+
+              <table class="step-table">
+                <thead>
+                  <tr>
+                    <th>Step</th><th>Bit</th><th>Calculation</th><th>value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>0</td><td>—</td><td>start</td><td>0</td></tr>
+                  <tr><td>1</td><td>1</td><td>0 × 2 + 1</td><td>1</td></tr>
+                  <tr><td>2</td><td>0</td><td>1 × 2 + 0</td><td>2</td></tr>
+                  <tr><td>3</td><td>1</td><td>2 × 2 + 1</td><td>5</td></tr>
+                  <tr><td>4</td><td>1</td><td>5 × 2 + 1</td><td>11</td></tr>
+                </tbody>
+              </table>
+
+              <span class="flow">
+                0 <span class="arrow">→</span> 1 <span class="arrow">→</span> 2
+                <span class="arrow">→</span> 5 <span class="arrow">→</span> 11
+              </span>
+
+              <span class="subhead">What happens at each step</span>
+              <ul>
+                <li><strong>Step 1</strong> — start at 0, read the first bit <span class="mono">1</span>. → <span class="mono">0 × 2 + 1 = 1</span></li>
+                <li><strong>Step 2</strong> — read <span class="mono">0</span>. The 1 shifts left (becomes 2), and 0 goes into the units. → <span class="mono">1 × 2 + 0 = 2</span></li>
+                <li><strong>Step 3</strong> — read <span class="mono">1</span>. The 2 shifts left (becomes 4), and 1 goes into the units. → <span class="mono">2 × 2 + 1 = 5</span></li>
+                <li><strong>Step 4</strong> — read <span class="mono">1</span>. The 5 shifts left (becomes 10), and 1 goes into the units. → <span class="mono">5 × 2 + 1 = 11</span></li>
+              </ul>
+
+              <span class="subhead">Second example — 11010</span>
+              Bits: <span class="mono">1, 1, 0, 1, 0</span>
+
+              <table class="step-table">
+                <thead>
+                  <tr>
+                    <th>Step</th><th>Bit</th><th>Calculation</th><th>value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>0</td><td>—</td><td>start</td><td>0</td></tr>
+                  <tr><td>1</td><td>1</td><td>0 × 2 + 1</td><td>1</td></tr>
+                  <tr><td>2</td><td>1</td><td>1 × 2 + 1</td><td>3</td></tr>
+                  <tr><td>3</td><td>0</td><td>3 × 2 + 0</td><td>6</td></tr>
+                  <tr><td>4</td><td>1</td><td>6 × 2 + 1</td><td>13</td></tr>
+                  <tr><td>5</td><td>0</td><td>13 × 2 + 0</td><td>26</td></tr>
+                </tbody>
+              </table>
+
+              Result: <span class="mono">11010₂ = 26₁₀</span>
+              (verify with place values: 16 + 8 + 2 = 26)
+
+              <span class="subhead">How it compares to the place-value method</span>
+              <ul>
+                <li><strong>Place-value</strong> (right to left): <span class="mono">1×8 + 0×4 + 1×2 + 1×1 = 11</span></li>
+                <li><strong>Double-and-add</strong> (left to right): <span class="mono">((((0×2+1)×2+0)×2+1)×2+1) = 11</span></li>
+              </ul>
+              Both give <span class="mono">11</span>. The double-and-add method is often faster to do
+              mentally because you never need to count positions or remember powers of 2 —
+              you just keep doubling and adding.
+            </div>
+          </div>
+
+          <h3>Decimal → Binary</h3>
+          <p>
+            Use <strong>repeated division by 2</strong>. Divide the number by 2, write down the remainder,
+            then divide the quotient again — until the quotient reaches 0. Finally, read the remainders
+            from the bottom up.
+          </p>
+
+          <div class="calc">
+            <div class="title">Example — convert 45 to binary</div>
+            <div>45 ÷ 2 = 22 &nbsp; remainder <span class="rem">1</span></div>
+            <div>22 ÷ 2 = 11 &nbsp; remainder <span class="rem">0</span></div>
+            <div>11 ÷ 2 = &nbsp;5 &nbsp; remainder <span class="rem">1</span></div>
+            <div>&nbsp;5 ÷ 2 = &nbsp;2 &nbsp; remainder <span class="rem">1</span></div>
+            <div>&nbsp;2 ÷ 2 = &nbsp;1 &nbsp; remainder <span class="rem">0</span></div>
+            <div>&nbsp;1 ÷ 2 = &nbsp;0 &nbsp; remainder <span class="rem">1</span></div>
+            <div class="rule">────────────────────────────</div>
+            <div>Read bottom → top: <span class="res">101101</span></div>
+          </div>
+
+          <p>
+            Every remainder is either 0 or 1, which is exactly why the result contains only those two digits.
+            The last remainder you write is always the leading (leftmost) bit of the answer.
+          </p>
+
+        </article>
+      </section>
+
+      <!-- ---------- NOTES: HEX ---------- -->
+      <section class="panel" id="panel-notes-hex">
+        <header class="panel-head">
+          <p class="eyebrow">Σημειώσεις</p>
+          <h2>Hexadecimal ⇄ Decimal</h2>
+          <p class="lead">Hexadecimal is a base‑16 system. It uses 0–9 for values 0–9 and the letters A–F for 10–15.</p>
+        </header>
+
+        <article class="notes">
+
+          <h3>The sixteen hex digits</h3>
+          <p>
+            Because a single symbol is needed for every value from 0 to 15, hex borrows letters
+            for the values above 9:
+          </p>
+
+          <table class="pv">
+            <thead>
+              <tr>
+                <th>Hex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Decimal</th>
+                <td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Hex → Decimal</h3>
+          <p>
+            The method is identical to binary, except the place values are <strong>powers of 16</strong>
+            instead of powers of 2 — again counted from the right, starting at 16⁰ = 1.
+          </p>
+
+          <table class="pv">
+            <thead>
+              <tr>
+                <th>Position</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Place value</th>
+                <td>65536</td><td>4096</td><td>256</td><td>16</td><td>1</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            Multiply each hex digit by its place value (converting letters to 10–15 first), then add.
+          </p>
+
+          <div class="calc hex">
+            <div class="title">Example — 2F in hex</div>
+            <div>2 × 16¹ = 2 × 16 = 32</div>
+            <div>F × 16⁰ = 15 × 1 = 15</div>
+            <div class="rule">──────────────────</div>
+            <div>32 + 15 = <span class="res">47</span></div>
+          </div>
+
+          <div class="calc hex">
+            <div class="title">Example — 1A3 in hex</div>
+            <div>1 × 16² = 1 × 256 = 256</div>
+            <div>A × 16¹ = 10 × 16 = 160</div>
+            <div>3 × 16⁰ = 3 × 1 = 3</div>
+            <div class="rule">────────────────────────</div>
+            <div>256 + 160 + 3 = <span class="res">419</span></div>
+          </div>
+
+          <h3>Decimal → Hex</h3>
+          <p>
+            Same idea as decimal → binary, but divide by <strong>16</strong> instead of 2.
+            Each remainder is a value between 0 and 15 — turn anything above 9 into its letter
+            (10 → A, 11 → B, … 15 → F). Then read the remainders from the bottom up.
+          </p>
+
+          <div class="calc hex">
+            <div class="title">Example — convert 419 to hex</div>
+            <div>419 ÷ 16 = 26 &nbsp; remainder &nbsp;<span class="rem">3</span></div>
+            <div>&nbsp;26 ÷ 16 = &nbsp;1 &nbsp; remainder <span class="rem">10 → A</span></div>
+            <div>&nbsp;&nbsp;1 ÷ 16 = &nbsp;0 &nbsp; remainder &nbsp;<span class="rem">1</span></div>
+            <div class="rule">──────────────────────────────</div>
+            <div>Read bottom → top: <span class="res">1A3</span></div>
+          </div>
+
+          <div class="callout">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <div>
+              <strong>Hex ↔ binary link:</strong> one hex digit is exactly four bits.
+              So <span class="mono">1A3</span> becomes
+              <span class="mono">0001 1010 0011</span>, and
+              <span class="mono">1011</span> becomes <span class="mono">B</span>.
+              This makes hex a compact shorthand for binary.
+            </div>
+          </div>
+
+        </article>
+      </section>
+
+    </div><!-- /.panels -->
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="site-footer">
+      <span class="name">Σωκράτης Παπαχιλλέως</span>
+      <span class="sep">—</span>
+      <span class="role">Καθηγητής Πληροφορικής</span>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   Section configuration
+   ========================================================= */
+const CONFIG = {
+  bin: {
+    label: 'binary',
+    base: 2,
+    max: 255,                    // 1 … 255  → up to 8 bits
+    digitsRe: /^[01]+$/,
+    stripRe: /^0b/i,
+    placeholder: 'Enter binary (0s and 1s)',
+    formatHint: 'Binary uses only 0 and 1.',
+    toBase: n => n.toString(2),
+    fromBase: s => BigInt('0b' + s),
+    group: s => s.replace(/\B(?=(\d{4})+(?!\d))/g, ' ')
+  },
+  hex: {
+    label: 'hexadecimal',
+    base: 16,
+    max: 4095,                   // 1 … 4095 → up to 3 hex digits
+    digitsRe: /^[0-9a-f]+$/i,
+    stripRe: /^0x/i,
+    placeholder: 'Enter hexadecimal (0-9, A-F)',
+    formatHint: 'Hexadecimal uses 0–9 and A–F only.',
+    toBase: n => n.toString(16).toUpperCase(),
+    fromBase: s => BigInt('0x' + s),
+    group: s => s
+  }
+};
+
+const ICON_CHECK = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+const ICON_CROSS = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
+
+/* =========================================================
+   Exercise engine
+   ========================================================= */
+function setupExercise(key) {
+  const cfg  = CONFIG[key];
+  const root = document.querySelector(`.exercise[data-type="${key}"]`);
+
+  const promptEl   = root.querySelector('.prompt');
+  const inputEl    = root.querySelector('.answer-input');
+  const wrapEl     = root.querySelector('.input-wrap');
+  const iconEl     = root.querySelector('.status-icon');
+  const checkBtn   = root.querySelector('.check-btn');
+  const newBtn     = root.querySelector('.new-btn');
+  const feedbackEl = root.querySelector('.feedback');
+
+  let direction = 'toDec';   // 'toDec' | 'toBase'
+  let value     = null;      // BigInt
+  let answered  = false;
+
+  /* ---------- helpers ---------- */
+  function clearFeedback() {
+    feedbackEl.className = 'feedback';
+    feedbackEl.innerHTML = '';
+    inputEl.classList.remove('invalid');
+  }
+
+  function showFormatWarning(msg) {
+    inputEl.classList.add('invalid');
+    feedbackEl.className = 'feedback warn';
+    feedbackEl.innerHTML = `<div class="msg">${msg}</div>`;
+    inputEl.focus();
+  }
+
+  /* ---------- new question (infinite) ---------- */
+  function newQuestion() {
+    direction = Math.random() < 0.5 ? 'toDec' : 'toBase';
+
+    let next;
+    do {
+      next = BigInt(1 + Math.floor(Math.random() * cfg.max));
+    } while (value !== null && next === value);
+    value = next;
+
+    answered = false;
+
+    if (direction === 'toDec') {
+      const shown = cfg.group(cfg.toBase(value));
+      promptEl.innerHTML =
+        `Convert <span class="num">${shown}</span><sub>${cfg.base}</sub> to <strong>decimal</strong>`;
+      inputEl.placeholder = 'Enter a decimal number';
+    } else {
+      promptEl.innerHTML =
+        `Convert <span class="num">${value.toString(10)}</span><sub>10</sub> to <strong>${cfg.label}</strong>`;
+      inputEl.placeholder = cfg.placeholder;
+    }
+
+    inputEl.value = '';
+    inputEl.readOnly = false;
+    wrapEl.classList.remove('ok', 'bad');
+    iconEl.className = 'status-icon';
+
+    checkBtn.disabled = false;
+    checkBtn.textContent = 'Check';
+
+    newBtn.classList.remove('pulse');
+    newBtn.textContent = 'New question';
+
+    clearFeedback();
+
+    if (root.offsetParent !== null) inputEl.focus();
+  }
+
+  /* ---------- checking ---------- */
+  function check() {
+    if (answered) return;
+
+    const raw = inputEl.value
+      .trim()
+      .replace(/[\s_]/g, '')
+      .replace(cfg.stripRe, '');
+
+    if (!raw) {
+      showFormatWarning('Type an answer first.');
+      return;
+    }
+
+    if (direction === 'toDec') {
+      if (!/^\d+$/.test(raw)) {
+        showFormatWarning('Use decimal digits 0–9 only.');
+        return;
+      }
+    } else {
+      if (!cfg.digitsRe.test(raw)) {
+        showFormatWarning(cfg.formatHint);
+        return;
+      }
+    }
+
+    const userValue = direction === 'toDec' ? BigInt(raw) : cfg.fromBase(raw);
+    const isCorrect = userValue === value;
+
+    answered = true;
+
+    // lock the question
+    inputEl.readOnly = true;
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Checked';
+    newBtn.classList.add('pulse');
+    newBtn.textContent = 'Next question →';
+
+    if (isCorrect) {
+      /* ---- GREEN TICK ---- */
+      iconEl.className = 'status-icon ok';
+      wrapEl.classList.add('ok');
+      feedbackEl.className = 'feedback ok';
+      feedbackEl.innerHTML = `<div class="msg">${ICON_CHECK} Correct!</div>`;
+    } else {
+      /* ---- RED X + correct answer below ---- */
+      const correctAnswer = direction === 'toDec'
+        ? value.toString(10)
+        : cfg.toBase(value);
+
+      const suffix = direction === 'toDec' ? '' : `<sub>${cfg.base}</sub>`;
+
+      iconEl.className = 'status-icon bad';
+      wrapEl.classList.add('bad');
+      feedbackEl.className = 'feedback bad';
+      feedbackEl.innerHTML = `
+        <div class="msg">${ICON_CROSS} Not quite.</div>
+        <div class="answer-line">
+          Correct answer: <code>${correctAnswer}</code>${suffix}
+        </div>`;
+    }
+
+    newBtn.focus();
+  }
+
+  /* ---------- events ---------- */
+  checkBtn.addEventListener('click', check);
+  newBtn.addEventListener('click', newQuestion);
+
+  inputEl.addEventListener('input', () => {
+    if (feedbackEl.classList.contains('warn')) clearFeedback();
+  });
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (answered) newQuestion();
+    else check();
+  });
+
+  // first question
+  newQuestion();
+}
+
+/* =========================================================
+   Collapsible sidebar groups (works for nested groups too)
+   ========================================================= */
+document.querySelectorAll('.nav-group').forEach(group => {
+  const head = group.querySelector(':scope > .nav-group-head');
+  if (!head) return;
+
+  head.addEventListener('click', () => {
+    const isOpen = group.classList.toggle('is-open');
+    head.setAttribute('aria-expanded', String(isOpen));
+  });
+});
+
+/* =========================================================
+   Sidebar navigation
+   ========================================================= */
+const navItems = document.querySelectorAll('.nav-item[data-section]');
+const panels   = document.querySelectorAll('.panel');
+
+navItems.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const section = btn.dataset.section;
+
+    navItems.forEach(b => b.classList.toggle('is-active', b === btn));
+    panels.forEach(p => p.classList.toggle('is-active', p.id === 'panel-' + section));
+
+    const input = document.querySelector(`#panel-${section} .answer-input`);
+    if (input && !input.readOnly) input.focus();
+  });
+});
+
+/* =========================================================
+   Boot
+   ========================================================= */
+setupExercise('bin');
+setupExercise('hex');
+</script>
+
+</body>
+</html>
