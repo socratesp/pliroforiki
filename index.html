@@ -1,1501 +1,1045 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Πληροφορική Κατέυθυνσης</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++ για Αρχάριους — Μαθαίνω βήμα βήμα</title>
 <style>
-  * { box-sizing: border-box; }
-
-  :root {
-    --bg: #0b1020;
-    --panel: rgba(255, 255, 255, .045);
-    --line: rgba(255, 255, 255, .09);
-    --txt: #e6ecff;
-    --muted: #8fa1c4;
-    --faint: #5f7295;
-    --green: #4ade80;
-    --red: #f87171;
-    --amber: #fbbf24;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  }
-
-  html, body { height: 100%; }
-
-  body {
-    margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    color: var(--txt);
-    background:
-      radial-gradient(circle at 10% 6%, rgba(56, 189, 248, .16), transparent 40%),
-      radial-gradient(circle at 92% 94%, rgba(168, 85, 247, .16), transparent 40%),
-      var(--bg);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ============ LAYOUT ============ */
-  .app {
-    display: grid;
-    grid-template-columns: 276px minmax(0, 1fr);
-    min-height: 100vh;
-  }
-
-  /* ============ SIDEBAR ============ */
-  .sidebar {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    padding: 26px 16px 30px;
-    background: rgba(9, 14, 30, .74);
-    border-right: 1px solid var(--line);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 0 8px 22px;
-    margin-bottom: 18px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .brand-mark {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    flex: none;
-    border-radius: 11px;
-    color: #06101f;
-    background: linear-gradient(135deg, #60a5fa, #a78bfa 60%, #f472b6);
-    box-shadow: 0 8px 22px -8px rgba(96, 165, 250, .9);
-  }
-
-  .brand-mark svg {
-    width: 20px;
-    height: 20px;
-    display: block;
-  }
-
-  .brand h1 {
-    margin: 0;
-    font-size: .92rem;
-    font-weight: 700;
-    letter-spacing: -.01em;
-    line-height: 1.25;
-  }
-
-  /* ============ COLLAPSIBLE GROUPS ============ */
-  .nav-group {
-    margin-top: 16px;
-    margin-bottom: 4px;
-  }
-
-  .nav-group-head {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    width: 100%;
-    margin: 0;
-    padding: 11px 13px;
-    font: inherit;
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    text-align: left;
-    color: #b6c5e2;
-    background: rgba(255, 255, 255, .035);
-    border: 1px solid var(--line);
-    border-radius: 11px;
-    cursor: pointer;
-    transition: background .16s, color .16s, border-color .16s;
-  }
-
-  .nav-group-head:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, .075);
-    border-color: rgba(129, 160, 255, .3);
-  }
-
-  .nav-group-head .chev {
-    width: 13px;
-    height: 13px;
-    flex: none;
-    color: #6d82a8;
-    transition: transform .24s ease, color .16s;
-  }
-
-  .nav-group-head:hover .chev { color: #a8bde0; }
-
-  .nav-group.is-open > .nav-group-head {
-    color: #fff;
-    border-color: rgba(129, 160, 255, .35);
-    background: linear-gradient(90deg, rgba(96, 165, 250, .16), rgba(167, 139, 250, .1));
-  }
-
-  .nav-group.is-open > .nav-group-head .chev { transform: rotate(0deg); }
-  .nav-group:not(.is-open) > .nav-group-head .chev { transform: rotate(-90deg); }
-
-  /* Notes group gets an amber accent */
-  .nav-group[data-group="notes"].is-open > .nav-group-head {
-    border-color: rgba(251, 191, 36, .38);
-    background: linear-gradient(90deg, rgba(251, 191, 36, .14), rgba(251, 191, 36, .05));
-  }
-  .nav-group[data-group="notes"].is-open > .nav-group-head .chev { color: var(--amber); }
-
-  /* --- Submenu wrapper --- */
-  .nav-sub-group {
-    margin: 0 0 0 16px;
-    padding-left: 12px;
-    border-left: 1px solid rgba(255, 255, 255, .1);
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
-    transition: max-height .3s ease, opacity .22s ease, margin-top .24s ease;
-  }
-
-  .nav-group.is-open > .nav-sub-group {
-    max-height: 800px;
-    opacity: 1;
-    margin-top: 8px;
-  }
-
-  /* ============ NESTED (SUB) GROUP ============ */
-  .nav-group.nested {
-    margin-top: 2px;
-    margin-bottom: 0;
-  }
-
-  .nav-group.nested > .nav-group-head {
-    padding: 8px 11px;
-    font-size: .68rem;
-    font-weight: 650;
-    letter-spacing: .1em;
-    background: transparent;
-    border-color: transparent;
-    color: #a3b4d2;
-    border-radius: 9px;
-  }
-
-  .nav-group.nested > .nav-group-head:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, .05);
-    border-color: transparent;
-  }
-
-  .nav-group.nested.is-open > .nav-group-head {
-    color: #dbe6ff;
-    background: rgba(255, 255, 255, .045);
-    border-color: transparent;
-  }
-
-  .nav-group.nested > .nav-group-head .chev {
-    width: 11px;
-    height: 11px;
-    color: #5a6d92;
-  }
-
-  .nav-group.nested.is-open > .nav-group-head .chev { color: #8fa1c4; }
-
-  .nav-group.nested > .nav-sub-group {
-    border-left-color: rgba(255, 255, 255, .06);
-    margin-left: 10px;
-    padding-left: 10px;
-  }
-
-  /* --- Navigation items --- */
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    width: 100%;
-    margin-bottom: 5px;
-    padding: 11px 13px;
-    font: inherit;
-    font-size: .875rem;
-    font-weight: 550;
-    text-align: left;
-    color: #b6c5e2;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 11px;
-    cursor: pointer;
-    transition: background .16s, color .16s, border-color .16s;
-  }
-
-  .nav-item:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, .055);
-  }
-
-  .nav-item.is-active {
-    color: #fff;
-    background: linear-gradient(90deg, rgba(96, 165, 250, .22), rgba(167, 139, 250, .14));
-    border-color: rgba(129, 160, 255, .35);
-  }
-
-  .nav-dot {
-    width: 7px;
-    height: 7px;
-    flex: none;
-    border-radius: 50%;
-    background: #3d4d6d;
-    transition: background .16s, box-shadow .16s;
-  }
-
-  .nav-item.is-active .nav-dot {
-    background: #60a5fa;
-    box-shadow: 0 0 10px #60a5fa;
-  }
-
-  .nav-item[data-section="hex"].is-active .nav-dot {
-    background: #a78bfa;
-    box-shadow: 0 0 10px #a78bfa;
-  }
-
-  .nav-item[data-section^="notes"].is-active .nav-dot {
-    background: var(--amber);
-    box-shadow: 0 0 10px var(--amber);
-  }
-
-  .nav-sub {
-    font-size: .83rem;
-    padding: 9px 12px;
-    border-radius: 9px;
-  }
-
-  .nav-sub .nav-dot { width: 6px; height: 6px; }
-
-  /* ============ CONTENT ============ */
-  .content {
-    display: flex;
-    flex-direction: column;
-    padding: 46px 40px 40px;
-    max-width: 860px;
-    min-height: 100vh;
-  }
-
-  .panels { flex: 1; }
-
-  .panel { display: none; animation: fade .28s ease; }
-  .panel.is-active { display: block; }
-
-  @keyframes fade {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  .eyebrow {
-    margin: 0 0 8px;
-    font-size: .68rem;
-    font-weight: 700;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: #6d82a8;
-  }
-
-  .panel-head h2 {
-    margin: 0 0 8px;
-    font-size: clamp(1.5rem, 3.4vw, 2rem);
-    letter-spacing: -.02em;
-    background: linear-gradient(90deg, #7dd3fc, #a78bfa 55%, #f472b6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .lead {
-    margin: 0 0 26px;
-    font-size: .93rem;
-    color: var(--muted);
-    max-width: 56ch;
-  }
-
-  /* ============ FOOTER ============ */
-  .site-footer {
-    margin-top: 56px;
-    padding-top: 22px;
-    border-top: 1px solid var(--line);
-    text-align: center;
-    font-size: .8rem;
-    letter-spacing: .02em;
-    color: #6d82a8;
-  }
-
-  .site-footer .name {
-    color: #b6c5e2;
-    font-weight: 650;
-  }
-
-  .site-footer .sep {
-    margin: 0 8px;
-    color: #3d4d6d;
-  }
-
-  .site-footer .role {
-    color: var(--faint);
-  }
-
-  /* ============ EXERCISE CARD ============ */
-  .exercise {
-    position: relative;
-    overflow: hidden;
-    padding: 28px 26px 22px;
-    border-radius: 20px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 26px 52px -28px rgba(0, 0, 0, .95);
-  }
-
-  .exercise::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 3px;
-    background: linear-gradient(90deg, #38bdf8, #3b82f6);
-  }
-
-  .exercise[data-type="hex"]::before {
-    background: linear-gradient(90deg, #a78bfa, #ec4899);
-  }
-
-  /* ---- Prompt ---- */
-  .prompt {
-    margin: 0;
-    font-size: 1.05rem;
-    line-height: 1.9;
-    color: #b9c8e4;
-  }
-
-  .prompt strong { color: #fff; font-weight: 650; }
-
-  .prompt .num {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 1.35rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    color: #fff;
-    background: rgba(255, 255, 255, .075);
-    border: 1px solid rgba(255, 255, 255, .11);
-    padding: 2px 13px;
-    border-radius: 9px;
-  }
-
-  .prompt sub {
-    font-size: .68em;
-    color: #7f92b8;
-    margin-left: 3px;
-  }
-
-  /* ---- Answer row ---- */
-  .answer-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 22px;
-  }
-
-  .input-wrap { position: relative; flex: 1; min-width: 0; }
-
-  .answer-input {
-    width: 100%;
-    padding: 14px 50px 14px 16px;
-    font-family: var(--mono);
-    font-size: 1.05rem;
-    letter-spacing: .06em;
-    color: #eaf1ff;
-    background: rgba(6, 12, 28, .72);
-    border: 1px solid rgba(255, 255, 255, .13);
-    border-radius: 12px;
-    outline: none;
-    transition: border-color .18s, box-shadow .18s, background .18s;
-  }
-
-  .answer-input::placeholder {
-    color: #4a5b7c;
-    letter-spacing: 0;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-
-  .answer-input:focus {
-    border-color: #60a5fa;
-    background: rgba(6, 12, 28, .95);
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, .2);
-  }
-
-  .answer-input[readonly] { cursor: default; }
-
-  .answer-input.invalid {
-    border-color: var(--amber);
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, .16);
-  }
-
-  .input-wrap.ok .answer-input {
-    border-color: rgba(74, 222, 128, .75);
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, .16);
-  }
-
-  .input-wrap.bad .answer-input {
-    border-color: rgba(248, 113, 113, .75);
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, .16);
-  }
-
-  /* ---- Status icon (tick / cross) ---- */
-  .status-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%) scale(.4);
-    display: grid;
-    place-items: center;
-    opacity: 0;
-    transition: opacity .18s, transform .22s cubic-bezier(.2, 1.6, .4, 1);
-    pointer-events: none;
-  }
-
-  .status-icon .ic { display: none; width: 20px; height: 20px; }
-
-  .status-icon.ok,
-  .status-icon.bad {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-
-  .status-icon.ok  { color: var(--green); }
-  .status-icon.bad { color: var(--red); }
-  .status-icon.ok  .ic.ok  { display: block; }
-  .status-icon.bad .ic.bad { display: block; }
-
-  /* ---- Buttons ---- */
-  .btn {
-    font: inherit;
-    font-size: .875rem;
-    font-weight: 650;
-    padding: 14px 22px;
-    border-radius: 12px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: transform .14s, box-shadow .18s, background .18s, color .18s, opacity .18s;
-  }
-
-  .btn:active { transform: translateY(1px); }
-
-  .btn.primary {
-    color: #06101f;
-    background: linear-gradient(135deg, #7dd3fc, #60a5fa);
-    box-shadow: 0 12px 26px -12px rgba(96, 165, 250, .95);
-  }
-
-  .btn.primary:hover:not(:disabled) { box-shadow: 0 16px 30px -12px rgba(96, 165, 250, 1); }
-
-  .btn.primary:disabled {
-    cursor: default;
-    opacity: .45;
-    box-shadow: none;
-  }
-
-  .btn.ghost {
-    color: #b6c5e2;
-    background: rgba(255, 255, 255, .05);
-    border-color: var(--line);
-  }
-
-  .btn.ghost:hover { color: #fff; background: rgba(255, 255, 255, .1); }
-
-  .btn.ghost.pulse {
-    color: #06101f;
-    background: linear-gradient(135deg, #a7f3d0, #4ade80);
-    border-color: transparent;
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .5); }
-    50%      { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
-  }
-
-  /* ---- Feedback ---- */
-  .feedback {
-    min-height: 58px;
-    margin-top: 18px;
-    font-size: .9rem;
-  }
-
-  .feedback .msg {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 650;
-  }
-
-  .feedback .msg .ic { width: 17px; height: 17px; flex: none; }
-
-  .feedback.ok  .msg { color: var(--green); }
-  .feedback.bad .msg { color: var(--red); }
-  .feedback.warn .msg { color: var(--amber); font-weight: 550; }
-
-  .feedback .answer-line {
-    margin-top: 9px;
-    font-size: .875rem;
-    color: #9fb0d0;
-  }
-
-  .feedback .answer-line code {
-    font-family: var(--mono);
-    font-size: .95rem;
-    font-weight: 700;
-    letter-spacing: .06em;
-    color: #fff;
-    background: rgba(248, 113, 113, .14);
-    border: 1px solid rgba(248, 113, 113, .3);
-    padding: 3px 10px;
-    border-radius: 7px;
-  }
-
-  .feedback .answer-line sub {
-    font-size: .68em;
-    color: #7f92b8;
-    margin-left: 2px;
-  }
-
-  .ex-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 4px;
-  }
-
-  /* ============ NOTES ============ */
-  .notes { padding: 2px 2px 10px; }
-
-  .notes h3 {
-    position: relative;
-    margin: 34px 0 14px;
-    padding-left: 15px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    letter-spacing: -.005em;
-    color: #dbe6ff;
-  }
-
-  .notes h3:first-child { margin-top: 4px; }
-
-  .notes h3::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 2px;
-    bottom: 2px;
-    width: 3px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #60a5fa, #a78bfa);
-  }
-
-  .notes p {
-    margin: 0 0 15px;
-    font-size: .92rem;
-    line-height: 1.78;
-    color: #a9bbda;
-  }
-
-  .notes strong { color: #eaf1ff; font-weight: 650; }
-
-  .notes .mono {
-    font-family: var(--mono);
-    font-size: .92em;
-    letter-spacing: .04em;
-    color: #cfe0ff;
-    background: rgba(255, 255, 255, .06);
-    border: 1px solid rgba(255, 255, 255, .09);
-    padding: 1px 7px;
-    border-radius: 6px;
-  }
-
-  /* place-value table */
-  .pv {
-    width: 100%;
-    margin: 4px 0 20px;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-family: var(--mono);
-    font-size: .88rem;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .pv th,
-  .pv td {
-    padding: 10px 6px;
-    text-align: center;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .pv tr:last-child th,
-  .pv tr:last-child td { border-bottom: none; }
-  .pv th:last-child,
-  .pv td:last-child { border-right: none; }
-
-  .pv thead th {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: .66rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #8fa1c4;
-    background: rgba(255, 255, 255, .05);
-  }
-
-  .pv tbody th {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: .68rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: #8fa1c4;
-    background: rgba(255, 255, 255, .03);
-    white-space: nowrap;
-  }
-
-  .pv td { color: #cfe0ff; }
-  .pv td.hi { color: #7dd3fc; font-weight: 700; }
-
-  /* calculation block */
-  .calc {
-    margin: 0 0 20px;
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: .875rem;
-    line-height: 2;
-    color: #b9c8e4;
-    background: rgba(6, 12, 28, .62);
-    border: 1px solid var(--line);
-    border-left: 3px solid #60a5fa;
-    border-radius: 12px;
-    overflow-x: auto;
-  }
-
-  .calc.hex { border-left-color: #a78bfa; }
-
-  .calc .title {
-    margin-bottom: 10px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: #6d82a8;
-  }
-
-  .calc .rem { color: var(--amber); }
-  .calc .res { color: var(--green); font-weight: 700; }
-  .calc .rule { color: #3d4d6d; }
-
-  /* callout */
-  .callout {
-    display: flex;
-    gap: 12px;
-    margin: 0 0 20px;
-    padding: 14px 16px;
-    font-size: .875rem;
-    line-height: 1.7;
-    color: #b9c8e4;
-    background: rgba(251, 191, 36, .07);
-    border: 1px solid rgba(251, 191, 36, .22);
-    border-radius: 12px;
-  }
-
-  .callout .ic {
-    flex: none;
-    width: 18px;
-    height: 18px;
-    margin-top: 2px;
-    color: var(--amber);
-  }
-
-  .callout strong { color: #fde68a; font-weight: 650; }
-
-  .callout .step-table {
-    width: 100%;
-    margin: 12px 0 14px;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-family: var(--mono);
-    font-size: .8rem;
-    border: 1px solid rgba(251, 191, 36, .25);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .callout .step-table th,
-  .callout .step-table td {
-    padding: 7px 10px;
-    text-align: center;
-    border-right: 1px solid rgba(251, 191, 36, .18);
-    border-bottom: 1px solid rgba(251, 191, 36, .18);
-    color: #dbe6ff;
-  }
-
-  .callout .step-table tr:last-child th,
-  .callout .step-table tr:last-child td { border-bottom: none; }
-  .callout .step-table th:last-child,
-  .callout .step-table td:last-child { border-right: none; }
-
-  .callout .step-table thead th {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: #d9a94a;
-    background: rgba(251, 191, 36, .07);
-  }
-
-  .callout .step-table tbody td:last-child { color: var(--green); font-weight: 700; }
-
-  .callout .flow {
-    display: block;
-    margin: 10px 0 12px;
-    padding: 10px 12px;
-    font-family: var(--mono);
-    font-size: .8rem;
-    line-height: 1.9;
-    color: #cfe0ff;
-    background: rgba(6, 12, 28, .55);
-    border: 1px solid rgba(255, 255, 255, .09);
-    border-radius: 9px;
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  .callout .flow .arrow { color: var(--amber); margin: 0 4px; }
-
-  .callout ul {
-    margin: 8px 0 12px;
-    padding-left: 20px;
-  }
-
-  .callout ul li {
-    margin-bottom: 6px;
-    line-height: 1.7;
-  }
-
-  .callout .subhead {
-    display: block;
-    margin: 14px 0 6px;
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #d9a94a;
-  }
-
-  /* ============ RESPONSIVE ============ */
-  @media (max-width: 880px) {
-    .app { grid-template-columns: 1fr; }
-
-    .sidebar {
-      position: static;
-      height: auto;
-      padding: 18px 16px 20px;
-      border-right: none;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .brand { padding-bottom: 16px; margin-bottom: 14px; }
-
-    .nav { display: block; }
-
-    .nav-group { margin-top: 12px; }
-
-    .nav-item { width: 100%; }
-
-    .content { padding: 30px 18px 30px; min-height: 0; }
-  }
-
-  @media (max-width: 520px) {
-    .exercise { padding: 22px 16px 18px; }
-    .answer-row { flex-direction: column; }
-    .btn.primary { width: 100%; }
-    .prompt .num { font-size: 1.15rem; }
-    .pv { font-size: .74rem; }
-    .pv th, .pv td { padding: 8px 3px; }
-    .callout { flex-direction: column; }
-    .callout .step-table { font-size: .72rem; }
-    .callout .step-table th,
-    .callout .step-table td { padding: 6px 5px; }
-  }
+  :root{
+    --bg:#eef3fb; --card:#ffffff; --ink:#1f2937; --muted:#5b6b7f;
+    --brand:#2563eb; --brand2:#7c3aed; --accent:#f59e0b;
+    --ok:#16a34a; --code-bg:#0f172a; --code-ink:#e2e8f0;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#eef3fb 0%,#f8fafc 100%);
+    color:var(--ink); line-height:1.65; font-size:17px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--brand),var(--brand2));
+    color:#fff; padding:28px 20px 22px; text-align:center;
+  }
+  header h1{margin:0 0 6px; font-size:clamp(22px,4vw,34px)}
+  header p{margin:0; opacity:.92; font-size:15px}
+
+  nav{
+    position:sticky; top:0; z-index:50; display:flex; gap:8px; flex-wrap:wrap;
+    justify-content:center; padding:12px; background:rgba(255,255,255,.95);
+    backdrop-filter:blur(8px); box-shadow:0 2px 12px rgba(15,23,42,.08);
+  }
+  .nav-btn{
+    border:2px solid #dbe4f0; background:#fff; color:var(--muted);
+    padding:8px 14px; border-radius:999px; cursor:pointer; font-size:14px;
+    font-weight:600; transition:.18s; font-family:inherit;
+  }
+  .nav-btn:hover{border-color:var(--brand); color:var(--brand)}
+  .nav-btn.active{
+    background:linear-gradient(135deg,var(--brand),var(--brand2));
+    color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(37,99,235,.35);
+  }
+
+  main{max-width:900px; margin:0 auto; padding:24px 16px 80px}
+  .topic{display:none; animation:fade .25s ease}
+  .topic.active{display:block}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+  .card{
+    background:var(--card); border-radius:var(--radius); padding:22px 24px;
+    box-shadow:0 6px 24px rgba(15,23,42,.07); margin-bottom:20px;
+  }
+  h2{margin:0 0 10px; font-size:clamp(20px,3.4vw,26px); line-height:1.3}
+  h3{margin:22px 0 8px; font-size:19px; color:var(--brand)}
+  .lead{font-size:18px; color:var(--muted); margin-top:0}
+
+  code{
+    background:#eef2ff; color:#4338ca; padding:2px 6px; border-radius:6px;
+    font-family:"Cascadia Code",Consolas,monospace; font-size:.94em;
+  }
+  pre{
+    background:var(--code-bg); color:var(--code-ink); padding:16px 18px;
+    border-radius:12px; overflow-x:auto; font-size:14.5px; line-height:1.55;
+    font-family:"Cascadia Code",Consolas,monospace; margin:12px 0;
+  }
+  pre code{background:none; color:inherit; padding:0; font-size:inherit}
+
+  table.tbl{width:100%; border-collapse:collapse; margin:12px 0; font-size:15.5px}
+  table.tbl th,table.tbl td{border:1px solid #e2e8f0; padding:10px 12px; text-align:left}
+  table.tbl th{background:#f1f5fb; color:var(--brand)}
+  table.tbl tr:nth-child(even) td{background:#fafbff}
+
+  .tip,.warn,.note{border-radius:12px; padding:12px 16px; margin:14px 0; font-size:15.5px}
+  .tip{background:#fffbeb; border-left:5px solid var(--accent)}
+  .warn{background:#fef2f2; border-left:5px solid #dc2626}
+  .note{background:#eff6ff; border-left:5px solid var(--brand)}
+
+  .ex-wrap{margin-top:8px}
+  .ex{
+    background:#f8fafc; border:2px dashed #cbd5e1; border-radius:14px;
+    padding:16px 18px; margin:14px 0;
+  }
+  .ex-label{
+    display:inline-block; background:var(--accent); color:#7c2d12;
+    font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px;
+    margin-bottom:8px; letter-spacing:.5px;
+  }
+  .ex-body{font-size:16px}
+  .ex-body pre{margin:8px 0; font-size:14px}
+  .ex-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap}
+  .btn.small{
+    border:none; padding:8px 14px; border-radius:10px; cursor:pointer;
+    font-size:14px; font-weight:700; font-family:inherit; transition:.18s;
+  }
+  .show-btn{background:#fef3c7; color:#92400e}
+  .show-btn:hover{background:#fde68a}
+  .new-btn{background:#dbeafe; color:#1e40af}
+  .new-btn:hover{background:#bfdbfe}
+  .ex-answer{
+    background:#052e16; color:#dcfce7; border-radius:10px; margin-top:12px;
+    padding:14px 16px; font-size:14px; overflow-x:auto;
+    font-family:"Cascadia Code",Consolas,monospace; white-space:pre-wrap;
+  }
+  .ex-answer.hidden{display:none}
+  .check{color:var(--ok); font-weight:700}
+  ul{padding-left:22px}
+  li{margin:6px 0}
 </style>
 </head>
 <body>
 
-<div class="app">
+<header>
+  <h1>🐣 C++ για μικρά παιδιά... και για όλους!</h1>
+  <p>Μαθαίνω προγραμματισμό βήμα-βήμα, με απλά λόγια και ασκήσεις</p>
+</header>
 
-  <!-- ================= SIDEBAR ================= -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <path d="M8 21h8M12 17v4"/>
-        </svg>
-      </div>
-      <div>
-        <h1>Πληροφορική Κατέυθυνσης</h1>
-      </div>
+<nav id="menu">
+  <button class="nav-btn active" data-target="t1">1 · Μεταβλητές</button>
+  <button class="nav-btn" data-target="t2">2 · cout &amp; cin</button>
+  <button class="nav-btn" data-target="t3">3 · Πράξεις</button>
+  <button class="nav-btn" data-target="t4">4 · cmath</button>
+  <button class="nav-btn" data-target="t5">5 · iomanip</button>
+  <button class="nav-btn" data-target="t6">6 · if / else</button>
+  <button class="nav-btn" data-target="t7">🏆 Τελική Πρόκληση</button>
+</nav>
+
+<main>
+
+<!-- ===================== ΜΑΘΗΜΑ 1 ===================== -->
+<section id="t1" class="topic active">
+  <div class="card">
+    <h2>📦 Μάθημα 1 — Κουτιά που κρατάνε πράγματα (Μεταβλητές)</h2>
+    <p class="lead">Φαντάσου ένα ράφι με κουτιά. Κάθε κουτί έχει ένα <b>όνομα</b> πάνω του, και μέσα βάζεις <b>ένα πράγμα</b>. Στην C++ αυτά τα κουτιά τα λέμε <b>μεταβλητές</b>.</p>
+
+    <h3>Οι 4 τύποι κουτιών</h3>
+    <table class="tbl">
+      <tr><th>Τύπος</th><th>Τι κρατάει</th><th>Παραδείγματα</th></tr>
+      <tr><td><code>int</code></td><td>Ακέραιους αριθμούς (χωρίς δεκαδικά)</td><td><code>5</code>, <code>42</code>, <code>-7</code>, <code>0</code></td></tr>
+      <tr><td><code>float</code></td><td>Αριθμούς με δεκαδικά</td><td><code>1.75</code>, <code>3.14</code>, <code>-0.5</code></td></tr>
+      <tr><td><code>char</code></td><td>Έναν μόνο χαρακτήρα</td><td><code>'A'</code>, <code>'x'</code>, <code>'7'</code></td></tr>
+      <tr><td><code>bool</code></td><td>Αληθές ή ψευδές</td><td><code>true</code>, <code>false</code></td></tr>
+    </table>
+
+    <h3>Πώς φτιάχνω ένα κουτί;</h3>
+    <p>Πάντα με την ίδια σειρά: <b>τύπος</b> → <b>όνομα</b> → <code>=</code> → <b>τιμή</b> → <code>;</code></p>
+    <pre><code>τύπος   όνομα   =   τιμή   ;</code></pre>
+
+    <pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main(){
+    int   ilikia      = 9;        // ακέραιος αριθμός
+    float ypsos       = 1.35;     // δεκαδικός αριθμός
+    char  gramma      = 'A';      // ΕΝΑΣ χαρακτήρας
+    bool  einaiPaidi  = true;     // αληθές / ψευδές
+
+    cout &lt;&lt; ilikia &lt;&lt; endl;
+    return 0;
+}</code></pre>
+
+    <div class="tip">
+      <b>📌 Οδηγίες — Πρόσεχε αυτά:</b>
+      <ul>
+        <li>Κάθε εντολή τελειώνει με <code>;</code> — όπως βάζουμε τελεία στην πρόταση.</li>
+        <li>Τα ονόματα γράφονται με <b>λατινικά γράμματα</b>, χωρίς κενά και χωρίς τόνους. (<code>ilikia</code> ✅ &nbsp; <code>ηλικία</code> ❌)</li>
+        <li>Οι δεκαδικοί γράφονται με <b>τελεία</b>: <code>1.35</code> ✅ &nbsp; <code>1,35</code> ❌</li>
+        <li>Ο <code>char</code> θέλει <b>μονά</b> εισαγωγικά: <code>'A'</code> ✅ &nbsp; <code>"A"</code> ❌</li>
+        <li>Ο <code>bool</code> παίρνει μόνο <code>true</code> ή <code>false</code> — με μικρά γράμματα!</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 1</h2>
+    <p class="lead">Πάτησε «🔄 Νέα άσκηση» για να αλλάξει ο αριθμός. Πρώτα προσπάθησε μόνος σου, μετά δες τη λύση!</p>
+    <div class="ex-wrap" data-bank="t1"></div>
+  </div>
+</section>
+
+<!-- ===================== ΜΑΘΗΜΑ 2 ===================== -->
+<section id="t2" class="topic">
+  <div class="card">
+    <h2>🗣️ Μάθημα 2 — Μιλάω με τον υπολογιστή (cout &amp; cin)</h2>
+    <p class="lead">Ο υπολογιστής είναι σαν ένα κουτί που δεν μιλάει. Για να συνεννοηθούμε έχουμε δύο πόρτες: μία για να <b>βγάζουμε</b> πράγματα και μία για να <b>βάζουμε</b>.</p>
+
+    <h3>🔼 cout — «βγάζω έξω» (τυπώνω στην οθόνη)</h3>
+    <p>Σκέψου: <b>c-out</b> = <i>βγάζω έξω</i>. Τα βελάκια <code>&lt;&lt;</code> δείχνουν προς το <code>cout</code>, γιατί του <b>δίνουμε</b> πράγματα.</p>
+    <pre><code>cout &lt;&lt; "Γεια σου!" &lt;&lt; endl;</code></pre>
+    <ul>
+      <li><code>"Γεια σου!"</code> → κείμενο μέσα σε <b>διπλά</b> εισαγωγικά</li>
+      <li><code>endl</code> → σημαίνει <i>end line</i> = <b>αλλαγή γραμμής</b></li>
+    </ul>
+
+    <h3>🔽 cin — «βάζω μέσα» (διαβάζω από το πληκτρολόγιο)</h3>
+    <p>Σκέψου: <b>c-in</b> = <i>βάζω μέσα</i>. Τα βελάκια <code>&gt;&gt;</code> δείχνουν προς τη μεταβλητή, γιατί <b>εκείνη</b> δέχεται την τιμή.</p>
+    <pre><code>int x;
+cin &gt;&gt; x;</code></pre>
+
+    <h3>Ένα ολόκληρο πρόγραμμα</h3>
+    <pre><code>#include &lt;iostream&gt;      // φέρνει το cout και το cin
+using namespace std;
+
+int main(){
+    int ilikia;                                    // 1. φτιάχνω το κουτί
+
+    cout &lt;&lt; "Πόσο χρονών είσαι; ";                // 2. ρωτάω
+    cin  &gt;&gt; ilikia;                                // 3. διαβάζω την απάντηση
+
+    cout &lt;&lt; "Είσαι " &lt;&lt; ilikia &lt;&lt; " χρονών!" &lt;&lt; endl;
+    return 0;
+}</code></pre>
+
+    <div class="tip">
+      <b>📌 Οδηγίες — Η «συνταγή» κάθε προγράμματος:</b>
+      <ul>
+        <li><code>#include &lt;iostream&gt;</code> — πάντα πρώτο, φέρνει τα εργαλεία εισόδου/εξόδου.</li>
+        <li><code>using namespace std;</code> — για να γράφουμε <code>cout</code> και όχι <code>std::cout</code>.</li>
+        <li><code>int main(){ ... }</code> — εδώ μέσα γράφουμε τις εντολές μας.</li>
+        <li><code>return 0;</code> — «τελείωσα, όλα καλά».</li>
+        <li>Μπορώ να τυπώσω πολλά μαζί: <code>cout &lt;&lt; "Ηλικία: " &lt;&lt; ilikia &lt;&lt; endl;</code></li>
+      </ul>
     </div>
 
-    <nav class="nav">
+    <div class="warn">
+      <b>⚠️ Προσοχή:</b> Το κείμενο θέλει <b>διπλά</b> εισαγωγικά <code>"..."</code>, ενώ οι μεταβλητές <b>δεν</b> θέλουν καθόλου εισαγωγικά. Το <code>cout &lt;&lt; "ilikia"</code> τυπώνει τη λέξη ilikia, ενώ το <code>cout &lt;&lt; ilikia</code> τυπώνει την <b>τιμή</b> της!
+    </div>
+  </div>
 
-      <!-- ==================== ΣΗΜΕΙΩΣΕΙΣ ==================== -->
-      <div class="nav-group is-open" data-group="notes">
-        <button class="nav-group-head" type="button"
-                aria-expanded="true" aria-controls="sub-notes">
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-          Σημειώσεις
-        </button>
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 2</h2>
+    <p class="lead">Χρησιμοποιείς κι ό,τι έμαθες στο Μάθημα 1 (μεταβλητές)!</p>
+    <div class="ex-wrap" data-bank="t2"></div>
+  </div>
+</section>
 
-        <div class="nav-sub-group" id="sub-notes">
+<!-- ===================== ΜΑΘΗΜΑ 3 ===================== -->
+<section id="t3" class="topic">
+  <div class="card">
+    <h2>➗ Μάθημα 3 — Πράξεις (η αριθμομηχανή μας)</h2>
+    <p class="lead">Η C++ είναι μια πολύ γρήγορη αριθμομηχανή. Τα σύμβολα που χρειαζόμαστε είναι μόνο πέντε!</p>
 
-          <!-- Nested: Numerical Conversions -->
-          <div class="nav-group nested is-open" data-group="notes-conv">
-            <button class="nav-group-head" type="button"
-                    aria-expanded="true" aria-controls="sub-notes-conv">
-              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-              Numerical Conversions
-            </button>
+    <table class="tbl">
+      <tr><th>Σύμβολο</th><th>Τι κάνει</th><th>Παράδειγμα</th><th>Αποτέλεσμα</th></tr>
+      <tr><td><code>+</code></td><td>Πρόσθεση</td><td><code>5 + 3</code></td><td><code>8</code></td></tr>
+      <tr><td><code>-</code></td><td>Αφαίρεση</td><td><code>5 - 3</code></td><td><code>2</code></td></tr>
+      <tr><td><code>*</code></td><td>Πολλαπλασιασμός</td><td><code>5 * 3</code></td><td><code>15</code></td></tr>
+      <tr><td><code>/</code></td><td>Διαίρεση</td><td><code>6 / 3</code></td><td><code>2</code></td></tr>
+      <tr><td><code>%</code></td><td>Το υπόλοιπο της διαίρεσης</td><td><code>7 % 3</code></td><td><code>1</code></td></tr>
+    </table>
 
-            <div class="nav-sub-group" id="sub-notes-conv">
-              <button class="nav-item nav-sub" type="button" data-section="notes-bin">
-                <span class="nav-dot"></span> Binary ⇄ Decimal
-              </button>
+    <h3>🔎 Το <code>%</code> με ένα παραμύθι</h3>
+    <p>Έχεις <b>17 καραμέλες</b> και <b>5 φίλους</b>. Μοιράζεις δίκαια:</p>
+    <ul>
+      <li><code>17 / 5</code> → <b>3</b> καραμέλες στον καθένα</li>
+      <li><code>17 % 5</code> → <b>2</b> καραμέλες περισσεύουν</li>
+    </ul>
 
-              <button class="nav-item nav-sub" type="button" data-section="notes-hex">
-                <span class="nav-dot"></span> Hexadecimal ⇄ Decimal
-              </button>
-            </div>
-          </div>
+    <div class="warn">
+      <b>⚠️ Η μεγάλη παγίδα — διαίρεση με ακεραίους!</b>
+      <p>Αν <b>και οι δύο</b> αριθμοί είναι <code>int</code>, η C++ πετάει τα δεκαδικά:</p>
+      <pre><code>cout &lt;&lt; 7 / 2 &lt;&lt; endl;      // τυπώνει 3  (όχι 3.5!)
+cout &lt;&lt; 7.0 / 2 &lt;&lt; endl;    // τυπώνει 3.5 (ο 7.0 είναι float)</code></pre>
+    </div>
 
-        </div>
-      </div>
+    <div class="tip">
+      <b>📌 Οδηγίες:</b>
+      <ul>
+        <li>Ο πολλαπλασιασμός γράφεται <code>*</code> — <b>όχι</b> <code>x</code> και όχι <code>·</code>.</li>
+        <li>Το <code>%</code> (modulo) σημαίνει «τι περισσεύει». Χρήσιμο για να βρεις αν ένας αριθμός είναι άρτιος: <code>n % 2 == 0</code>.</li>
+        <li>Μπορώ να αποθηκεύσω το αποτέλεσμα: <code>int apotelesma = a + b;</code></li>
+        <li>Η σειρά μετράει, όπως στα μαθηματικά: πρώτα <code>*</code> και <code>/</code>, μετά <code>+</code> και <code>-</code>. Οι παρενθέσεις <code>()</code> αλλάζουν τη σειρά.</li>
+      </ul>
+    </div>
 
-      <!-- ==================== ΑΚΗΣΕΙΣ ==================== -->
-      <div class="nav-group is-open" data-group="exercises">
-        <button class="nav-group-head" type="button"
-                aria-expanded="true" aria-controls="sub-exercises">
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-          Ακήσεις
-        </button>
+    <pre><code>#include &lt;iostream&gt;
+using namespace std;
 
-        <div class="nav-sub-group" id="sub-exercises">
+int main(){
+    int a = 10, b = 3;
+    cout &lt;&lt; "Άθροισμα: "     &lt;&lt; a + b &lt;&lt; endl;   // 13
+    cout &lt;&lt; "Διαφορά: "      &lt;&lt; a - b &lt;&lt; endl;   // 7
+    cout &lt;&lt; "Γινόμενο: "     &lt;&lt; a * b &lt;&lt; endl;   // 30
+    cout &lt;&lt; "Πηλίκο: "       &lt;&lt; a / b &lt;&lt; endl;   // 3
+    cout &lt;&lt; "Υπόλοιπο: "     &lt;&lt; a % b &lt;&lt; endl;   // 1
+    return 0;
+}</code></pre>
+  </div>
 
-          <!-- Nested: Numerical Conversions -->
-          <div class="nav-group nested is-open" data-group="ex-conv">
-            <button class="nav-group-head" type="button"
-                    aria-expanded="true" aria-controls="sub-ex-conv">
-              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-              Numerical Conversions
-            </button>
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 3</h2>
+    <div class="ex-wrap" data-bank="t3"></div>
+  </div>
+</section>
 
-            <div class="nav-sub-group" id="sub-ex-conv">
-              <button class="nav-item nav-sub is-active" type="button" data-section="bin">
-                <span class="nav-dot"></span> Binary ⇄ Decimal
-              </button>
+<!-- ===================== ΜΑΘΗΜΑ 4 ===================== -->
+<section id="t4" class="topic">
+  <div class="card">
+    <h2>🧰 Μάθημα 4 — cmath: η εργαλειοθήκη των μαθηματικών</h2>
+    <p class="lead">Η C++ έχει ένα κουτί γεμάτο μαθηματικά εργαλεία. Για να το ανοίξουμε γράφουμε <code>#include &lt;cmath&gt;</code> στην αρχή του προγράμματος.</p>
 
-              <button class="nav-item nav-sub" type="button" data-section="hex">
-                <span class="nav-dot"></span> Hexadecimal ⇄ Decimal
-              </button>
-            </div>
-          </div>
+    <table class="tbl">
+      <tr><th>Εργαλείο</th><th>Τι κάνει</th><th>Παράδειγμα</th><th>Αποτέλεσμα</th></tr>
+      <tr><td><code>pow(a, b)</code></td><td>Δύναμη: a υψωμένο στη b</td><td><code>pow(2, 5)</code></td><td><code>32</code></td></tr>
+      <tr><td><code>sqrt(x)</code></td><td>Τετραγωνική ρίζα</td><td><code>sqrt(81)</code></td><td><code>9</code></td></tr>
+      <tr><td><code>trunc(x)</code></td><td>Πετάει τα δεκαδικά (κόβει)</td><td><code>trunc(3.9)</code></td><td><code>3</code></td></tr>
+      <tr><td><code>round(x)</code></td><td>Στρογγυλοποιεί στον κοντινότερο</td><td><code>round(3.7)</code></td><td><code>4</code></td></tr>
+      <tr><td><code>abs(x)</code></td><td>Απόλυτη τιμή (χωρίς το μείον)</td><td><code>abs(-7)</code></td><td><code>7</code></td></tr>
+    </table>
 
-        </div>
-      </div>
+    <div class="tip">
+      <b>📌 Οδηγίες:</b>
+      <ul>
+        <li>Πάντα <code>#include &lt;cmath&gt;</code> στην αρχή — αλλιώς το πρόγραμμα δεν ξέρει τι είναι το <code>pow</code>.</li>
+        <li>Τα ονόματα γράφονται με <b>μικρά</b> γράμματα: <code>pow</code> ✅ &nbsp; <code>Pow</code> ή <code>POW</code> ❌</li>
+        <li>Μετά το όνομα του εργαλείου ανοίγουμε παρένθεση και βάζουμε την τιμή: <code>sqrt(25)</code>.</li>
+        <li>Το αποτέλεσμα μπορεί να αποθηκευτεί σε μεταβλητή: <code>float r = sqrt(25);</code></li>
+      </ul>
+    </div>
 
-    </nav>
-  </aside>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;cmath&gt;          // εδώ είναι τα pow, sqrt, round...
+using namespace std;
 
-  <!-- ================= CONTENT ================= -->
-  <main class="content">
+int main(){
+    cout &lt;&lt; pow(3, 2)    &lt;&lt; endl;   // 9
+    cout &lt;&lt; sqrt(64)     &lt;&lt; endl;   // 8
+    cout &lt;&lt; round(4.6)   &lt;&lt; endl;   // 5
+    cout &lt;&lt; trunc(4.9)   &lt;&lt; endl;   // 4
+    cout &lt;&lt; abs(-12)     &lt;&lt; endl;   // 12
+    return 0;
+}</code></pre>
 
-    <div class="panels">
+    <div class="note">
+      <b>💡 Διαφορά <code>trunc</code> και <code>round</code>:</b> Το <code>trunc(4.9)</code> δίνει <b>4</b> (απλά κόβει το ,9). Το <code>round(4.9)</code> δίνει <b>5</b> (κοιτάει ποιος είναι πιο κοντά).
+    </div>
+  </div>
 
-      <!-- ---------- EXERCISE: BINARY ---------- -->
-      <section class="panel is-active" id="panel-bin">
-        <header class="panel-head">
-          <p class="eyebrow">Exercise</p>
-          <h2>Binary ⇄ Decimal</h2>
-          <p class="lead">A random number appears in one base. Type it in the other and hit Check — questions keep coming.</p>
-        </header>
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 4</h2>
+    <p class="lead">Εδώ θα χρειαστείς και τα προηγούμενα: μεταβλητές, <code>cout</code>, <code>cin</code> και πράξεις!</p>
+    <div class="ex-wrap" data-bank="t4"></div>
+  </div>
+</section>
 
-        <div class="exercise" data-type="bin">
-          <p class="prompt"></p>
+<!-- ===================== ΜΑΘΗΜΑ 5 ===================== -->
+<section id="t5" class="topic">
+  <div class="card">
+    <h2>🎀 Μάθημα 5 — iomanip: ομορφαίνω τους αριθμούς</h2>
+    <p class="lead">Φαντάσου ότι θέλεις να δείξεις <b>3.14159</b> αλλά μόνο με 2 δεκαδικά: <b>3.14</b>. Γι' αυτό υπάρχει το <code>&lt;iomanip&gt;</code>.</p>
 
-          <div class="answer-row">
-            <div class="input-wrap">
-              <input class="answer-input" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
-              <span class="status-icon">
-                <svg class="ic ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                <svg class="ic bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </span>
-            </div>
-            <button class="btn primary check-btn" type="button">Check</button>
-          </div>
+    <h3>Τα δύο εργαλεία</h3>
+    <ul>
+      <li><code>fixed</code> → «θέλω <b>σταθερό</b> αριθμό δεκαδικών ψηφίων»</li>
+      <li><code>setprecision(n)</code> → «θέλω <b>n</b> δεκαδικά ψηφία»</li>
+    </ul>
+    <p>Τα γράφουμε <b>μαζί</b>, μέσα στο <code>cout</code>:</p>
+    <pre><code>cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; 3.14159 &lt;&lt; endl;   // 3.14</code></pre>
 
-          <div class="feedback" role="status" aria-live="polite"></div>
+    <div class="tip">
+      <b>📌 Οδηγίες:</b>
+      <ul>
+        <li><code>#include &lt;iomanip&gt;</code> στην αρχή του προγράμματος.</li>
+        <li>Το <code>fixed</code> μπαίνει <b>πριν</b> το <code>setprecision</code> — πάντα με αυτή τη σειρά.</li>
+        <li>Ό,τι τυπώσεις <b>μετά</b> από αυτό θα έχει τόσα δεκαδικά, μέχρι να το αλλάξεις ξανά.</li>
+        <li>Αν ξεχάσεις το <code>fixed</code>, το <code>setprecision(2)</code> σημαίνει «2 <b>συνολικά</b> ψηφία» και θα σου τυπώσει <code>3.1</code> — προσοχή!</li>
+      </ul>
+    </div>
 
-          <div class="ex-actions">
-            <button class="btn ghost new-btn" type="button">New question</button>
-          </div>
-        </div>
-      </section>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;       // εδώ είναι το fixed και το setprecision
+using namespace std;
 
-      <!-- ---------- EXERCISE: HEX ---------- -->
-      <section class="panel" id="panel-hex">
-        <header class="panel-head">
-          <p class="eyebrow">Exercise</p>
-          <h2>Hexadecimal ⇄ Decimal</h2>
-          <p class="lead">A random number appears in one base. Type it in the other and hit Check — questions keep coming.</p>
-        </header>
+int main(){
+    float pi = 3.14159;
 
-        <div class="exercise" data-type="hex">
-          <p class="prompt"></p>
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; pi &lt;&lt; endl;   // 3.14
+    cout &lt;&lt; fixed &lt;&lt; setprecision(4) &lt;&lt; pi &lt;&lt; endl;   // 3.1416
 
-          <div class="answer-row">
-            <div class="input-wrap">
-              <input class="answer-input" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
-              <span class="status-icon">
-                <svg class="ic ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                <svg class="ic bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </span>
-            </div>
-            <button class="btn primary check-btn" type="button">Check</button>
-          </div>
+    float mish = 2.5;
+    cout &lt;&lt; fixed &lt;&lt; setprecision(3) &lt;&lt; mish &lt;&lt; endl; // 2.500
+    return 0;
+}</code></pre>
 
-          <div class="feedback" role="status" aria-live="polite"></div>
+    <div class="note">
+      <b>💡 Τέλειο ζευγάρι:</b> Το <code>sqrt(2)</code> δίνει <code>1.41421356...</code>. Με <code>cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; sqrt(2);</code> τυπώνεις καθαρά <b>1.41</b>.
+    </div>
+  </div>
 
-          <div class="ex-actions">
-            <button class="btn ghost new-btn" type="button">New question</button>
-          </div>
-        </div>
-      </section>
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 5</h2>
+    <div class="ex-wrap" data-bank="t5"></div>
+  </div>
+</section>
 
-      <!-- ---------- NOTES: BINARY ---------- -->
-      <section class="panel" id="panel-notes-bin">
-        <header class="panel-head">
-          <p class="eyebrow">Σημειώσεις</p>
-          <h2>Binary ⇄ Decimal</h2>
-          <p class="lead">Binary is a base‑2 system: it uses only the digits 0 and 1. Decimal is base 10, using 0–9.</p>
-        </header>
+<!-- ===================== ΜΑΘΗΜΑ 6 ===================== -->
+<section id="t6" class="topic">
+  <div class="card">
+    <h2>🤔 Μάθημα 6 — if / else: παίρνω αποφάσεις</h2>
+    <p class="lead">Ο υπολογιστής μπορεί να σκέφτεται σαν εμάς: <b>«ΑΝ</b> κάνει κρύο, φόρα ζακέτα, <b>ΑΛΛΙΩΣ</b> φόρα μπλουζάκι».</p>
 
-        <article class="notes">
+    <pre><code>if (συνθήκη) {
+    // γίνεται αυτό αν η συνθήκη είναι ΑΛΗΘΙΝΗ
+} else {
+    // γίνεται αυτό αν είναι ΨΕΥΔΗΣ
+}</code></pre>
 
-          <h3>Binary → Decimal</h3>
-          <p>
-            Each binary digit (a <strong>bit</strong>) has a <strong>place value</strong> — a power of 2 —
-            determined by its position. Positions are counted from the right, starting at 2⁰ = 1.
-          </p>
+    <h3>Οι «λέξεις» που ρωτάνε</h3>
+    <table class="tbl">
+      <tr><th>Σύμβολο</th><th>Σημαίνει</th><th>Παράδειγμα</th></tr>
+      <tr><td><code>&gt;</code></td><td>μεγαλύτερο</td><td><code>x &gt; 0</code></td></tr>
+      <tr><td><code>&lt;</code></td><td>μικρότερο</td><td><code>x &lt; 10</code></td></tr>
+      <tr><td><code>&gt;=</code></td><td>μεγαλύτερο ή ίσο</td><td><code>vathmos &gt;= 5</code></td></tr>
+      <tr><td><code>&lt;=</code></td><td>μικρότερο ή ίσο</td><td><code>x &lt;= 100</code></td></tr>
+      <tr><td><code>==</code></td><td><b>είναι ίσο με</b></td><td><code>x == 5</code></td></tr>
+      <tr><td><code>!=</code></td><td>δεν είναι ίσο με</td><td><code>x != 5</code></td></tr>
+    </table>
 
-          <table class="pv">
-            <thead>
-              <tr>
-                <th>Position</th><th>7</th><th>6</th><th>5</th><th>4</th>
-                <th>3</th><th>2</th><th>1</th><th>0</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Place value</th>
-                <td>128</td><td>64</td><td>32</td><td>16</td>
-                <td>8</td><td>4</td><td>2</td><td>1</td>
-              </tr>
-            </tbody>
-          </table>
+    <div class="warn">
+      <b>⚠️ Η ΠΙΟ ΣΗΜΑΝΤΙΚΗ ΠΑΓΙΔΑ ΟΛΩΝ:</b>
+      <ul>
+        <li><code>==</code> (δύο ίσον) ρωτάει: «είναι ίσο;» → μέσα σε <code>if</code></li>
+        <li><code>=</code> (ένα ίσον) <b>δίνει</b> τιμή → μέσα σε δήλωση μεταβλητής</li>
+      </ul>
+      <p>Το <code>if (x = 5)</code> είναι <b>λάθος</b>! Το σωστό είναι <code>if (x == 5)</code>.</p>
+    </div>
 
-          <p>
-            To convert: multiply every bit by its place value, then add all the results together.
-            Bits equal to <span class="mono">0</span> contribute nothing.
-          </p>
+    <div class="tip">
+      <b>📌 Οδηγίες:</b>
+      <ul>
+        <li>Η συνθήκη μπαίνει πάντα μέσα σε <b>παρενθέσεις</b> <code>( ... )</code>.</li>
+        <li>Οι εντολές μέσα στα <code>{ }</code> — προσοχή στις αγκύλες!</li>
+        <li>Το <code>else</code> <b>δεν</b> έχει παρένθεση και <b>δεν</b> έχει <code>;</code> μετά.</li>
+        <li>Μπορώ να έχω μόνο <code>if</code>, χωρίς <code>else</code>, αν δεν θέλω να κάνω κάτι στην περίπτωση που είναι ψευδές.</li>
+      </ul>
+    </div>
 
-          <div class="calc">
-            <div class="title">Example — 1011 in binary</div>
-            <div>1 × 2³ = 8</div>
-            <div>0 × 2² = 0</div>
-            <div>1 × 2¹ = 2</div>
-            <div>1 × 2⁰ = 1</div>
-            <div class="rule">────────────────</div>
-            <div>8 + 0 + 2 + 1 = <span class="res">11</span></div>
-          </div>
+    <pre><code>#include &lt;iostream&gt;
+using namespace std;
 
-          <div class="callout">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4M12 8h.01"/>
-            </svg>
-            <div>
-              <strong>Shortcut — “double and add” (Horner's method):</strong>
-              read the bits <em>left to right</em>. Start with <span class="mono">value = 0</span>,
-              then for each bit do:
+int main(){
+    int vathmos;
+    cout &lt;&lt; "Δώσε βαθμό: ";
+    cin &gt;&gt; vathmos;
 
-              <span class="flow">value = value × 2 + bit</span>
+    if (vathmos &gt;= 5) {
+        cout &lt;&lt; "Πέρασες! 🎉" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "Κόπηκες... 💪" &lt;&lt; endl;
+    }
+    return 0;
+}</code></pre>
+  </div>
 
-              <span class="subhead">Why it works</span>
-              Each <span class="mono">× 2</span> shifts every existing bit one place to the left
-              in the place-value table (8s become 16s, 4s become 8s, and so on).
-              Adding the new bit then fills the empty <strong>units (2⁰) position</strong>.
-              So you build the number one place at a time — no need to pre-compute powers of 2.
+  <div class="card">
+    <h2>✏️ Ασκήσεις — Μάθημα 6</h2>
+    <div class="ex-wrap" data-bank="t6"></div>
+  </div>
+</section>
 
-              <span class="subhead">Step-by-step for 1011</span>
-              Bits are read in this order: <span class="mono">1, 0, 1, 1</span>
+<!-- ===================== ΤΕΛΙΚΗ ΠΡΟΚΛΗΣΗ ===================== -->
+<section id="t7" class="topic">
+  <div class="card">
+    <h2>🏆 Τελική Πρόκληση — Όλα μαζί!</h2>
+    <p class="lead">Εδώ θα χρειαστείς <b>όλα</b> τα μαθήματα: μεταβλητές, <code>cin</code>/<code>cout</code>, πράξεις (και <code>%</code>!), <code>cmath</code>, <code>iomanip</code> και <code>if/else</code>. Πάρε βαθιές ανάσες — τα καταφέρνεις!</p>
+    <div class="note">
+      <b>💡 Συμβουλή:</b> Γράψε πρώτα το πρόγραμμα σε χαρτί, βήμα-βήμα: <br>
+      1) Τι <b>διαβάζω</b>; &nbsp; 2) Τι <b>υπολογίζω</b>; &nbsp; 3) Τι <b>αποφασίζω</b>; &nbsp; 4) Τι <b>τυπώνω</b> και με πόσα δεκαδικά;
+    </div>
+    <div class="ex-wrap" data-bank="t7"></div>
+  </div>
+</section>
 
-              <table class="step-table">
-                <thead>
-                  <tr>
-                    <th>Step</th><th>Bit</th><th>Calculation</th><th>value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>0</td><td>—</td><td>start</td><td>0</td></tr>
-                  <tr><td>1</td><td>1</td><td>0 × 2 + 1</td><td>1</td></tr>
-                  <tr><td>2</td><td>0</td><td>1 × 2 + 0</td><td>2</td></tr>
-                  <tr><td>3</td><td>1</td><td>2 × 2 + 1</td><td>5</td></tr>
-                  <tr><td>4</td><td>1</td><td>5 × 2 + 1</td><td>11</td></tr>
-                </tbody>
-              </table>
-
-              <span class="flow">
-                0 <span class="arrow">→</span> 1 <span class="arrow">→</span> 2
-                <span class="arrow">→</span> 5 <span class="arrow">→</span> 11
-              </span>
-
-              <span class="subhead">What happens at each step</span>
-              <ul>
-                <li><strong>Step 1</strong> — start at 0, read the first bit <span class="mono">1</span>. → <span class="mono">0 × 2 + 1 = 1</span></li>
-                <li><strong>Step 2</strong> — read <span class="mono">0</span>. The 1 shifts left (becomes 2), and 0 goes into the units. → <span class="mono">1 × 2 + 0 = 2</span></li>
-                <li><strong>Step 3</strong> — read <span class="mono">1</span>. The 2 shifts left (becomes 4), and 1 goes into the units. → <span class="mono">2 × 2 + 1 = 5</span></li>
-                <li><strong>Step 4</strong> — read <span class="mono">1</span>. The 5 shifts left (becomes 10), and 1 goes into the units. → <span class="mono">5 × 2 + 1 = 11</span></li>
-              </ul>
-
-              <span class="subhead">Second example — 11010</span>
-              Bits: <span class="mono">1, 1, 0, 1, 0</span>
-
-              <table class="step-table">
-                <thead>
-                  <tr>
-                    <th>Step</th><th>Bit</th><th>Calculation</th><th>value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>0</td><td>—</td><td>start</td><td>0</td></tr>
-                  <tr><td>1</td><td>1</td><td>0 × 2 + 1</td><td>1</td></tr>
-                  <tr><td>2</td><td>1</td><td>1 × 2 + 1</td><td>3</td></tr>
-                  <tr><td>3</td><td>0</td><td>3 × 2 + 0</td><td>6</td></tr>
-                  <tr><td>4</td><td>1</td><td>6 × 2 + 1</td><td>13</td></tr>
-                  <tr><td>5</td><td>0</td><td>13 × 2 + 0</td><td>26</td></tr>
-                </tbody>
-              </table>
-
-              Result: <span class="mono">11010₂ = 26₁₀</span>
-              (verify with place values: 16 + 8 + 2 = 26)
-
-              <span class="subhead">How it compares to the place-value method</span>
-              <ul>
-                <li><strong>Place-value</strong> (right to left): <span class="mono">1×8 + 0×4 + 1×2 + 1×1 = 11</span></li>
-                <li><strong>Double-and-add</strong> (left to right): <span class="mono">((((0×2+1)×2+0)×2+1)×2+1) = 11</span></li>
-              </ul>
-              Both give <span class="mono">11</span>. The double-and-add method is often faster to do
-              mentally because you never need to count positions or remember powers of 2 —
-              you just keep doubling and adding.
-            </div>
-          </div>
-
-          <h3>Decimal → Binary</h3>
-          <p>
-            Use <strong>repeated division by 2</strong>. Divide the number by 2, write down the remainder,
-            then divide the quotient again — until the quotient reaches 0. Finally, read the remainders
-            from the bottom up.
-          </p>
-
-          <div class="calc">
-            <div class="title">Example — convert 45 to binary</div>
-            <div>45 ÷ 2 = 22 &nbsp; remainder <span class="rem">1</span></div>
-            <div>22 ÷ 2 = 11 &nbsp; remainder <span class="rem">0</span></div>
-            <div>11 ÷ 2 = &nbsp;5 &nbsp; remainder <span class="rem">1</span></div>
-            <div>&nbsp;5 ÷ 2 = &nbsp;2 &nbsp; remainder <span class="rem">1</span></div>
-            <div>&nbsp;2 ÷ 2 = &nbsp;1 &nbsp; remainder <span class="rem">0</span></div>
-            <div>&nbsp;1 ÷ 2 = &nbsp;0 &nbsp; remainder <span class="rem">1</span></div>
-            <div class="rule">────────────────────────────</div>
-            <div>Read bottom → top: <span class="res">101101</span></div>
-          </div>
-
-          <p>
-            Every remainder is either 0 or 1, which is exactly why the result contains only those two digits.
-            The last remainder you write is always the leading (leftmost) bit of the answer.
-          </p>
-
-        </article>
-      </section>
-
-      <!-- ---------- NOTES: HEX ---------- -->
-      <section class="panel" id="panel-notes-hex">
-        <header class="panel-head">
-          <p class="eyebrow">Σημειώσεις</p>
-          <h2>Hexadecimal ⇄ Decimal</h2>
-          <p class="lead">Hexadecimal is a base‑16 system. It uses 0–9 for values 0–9 and the letters A–F for 10–15.</p>
-        </header>
-
-        <article class="notes">
-
-          <h3>The sixteen hex digits</h3>
-          <p>
-            Because a single symbol is needed for every value from 0 to 15, hex borrows letters
-            for the values above 9:
-          </p>
-
-          <table class="pv">
-            <thead>
-              <tr>
-                <th>Hex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Decimal</th>
-                <td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <h3>Hex → Decimal</h3>
-          <p>
-            The method is identical to binary, except the place values are <strong>powers of 16</strong>
-            instead of powers of 2 — again counted from the right, starting at 16⁰ = 1.
-          </p>
-
-          <table class="pv">
-            <thead>
-              <tr>
-                <th>Position</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Place value</th>
-                <td>65536</td><td>4096</td><td>256</td><td>16</td><td>1</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p>
-            Multiply each hex digit by its place value (converting letters to 10–15 first), then add.
-          </p>
-
-          <div class="calc hex">
-            <div class="title">Example — 2F in hex</div>
-            <div>2 × 16¹ = 2 × 16 = 32</div>
-            <div>F × 16⁰ = 15 × 1 = 15</div>
-            <div class="rule">──────────────────</div>
-            <div>32 + 15 = <span class="res">47</span></div>
-          </div>
-
-          <div class="calc hex">
-            <div class="title">Example — 1A3 in hex</div>
-            <div>1 × 16² = 1 × 256 = 256</div>
-            <div>A × 16¹ = 10 × 16 = 160</div>
-            <div>3 × 16⁰ = 3 × 1 = 3</div>
-            <div class="rule">────────────────────────</div>
-            <div>256 + 160 + 3 = <span class="res">419</span></div>
-          </div>
-
-          <h3>Decimal → Hex</h3>
-          <p>
-            Same idea as decimal → binary, but divide by <strong>16</strong> instead of 2.
-            Each remainder is a value between 0 and 15 — turn anything above 9 into its letter
-            (10 → A, 11 → B, … 15 → F). Then read the remainders from the bottom up.
-          </p>
-
-          <div class="calc hex">
-            <div class="title">Example — convert 419 to hex</div>
-            <div>419 ÷ 16 = 26 &nbsp; remainder &nbsp;<span class="rem">3</span></div>
-            <div>&nbsp;26 ÷ 16 = &nbsp;1 &nbsp; remainder <span class="rem">10 → A</span></div>
-            <div>&nbsp;&nbsp;1 ÷ 16 = &nbsp;0 &nbsp; remainder &nbsp;<span class="rem">1</span></div>
-            <div class="rule">──────────────────────────────</div>
-            <div>Read bottom → top: <span class="res">1A3</span></div>
-          </div>
-
-          <div class="callout">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            <div>
-              <strong>Hex ↔ binary link:</strong> one hex digit is exactly four bits.
-              So <span class="mono">1A3</span> becomes
-              <span class="mono">0001 1010 0011</span>, and
-              <span class="mono">1011</span> becomes <span class="mono">B</span>.
-              This makes hex a compact shorthand for binary.
-            </div>
-          </div>
-
-        </article>
-      </section>
-
-    </div><!-- /.panels -->
-
-    <!-- ================= FOOTER ================= -->
-    <footer class="site-footer">
-      <span class="name">Σωκράτης Παπαχιλλέως</span>
-      <span class="sep">—</span>
-      <span class="role">Καθηγητής Πληροφορικής</span>
-    </footer>
-
-  </main>
-</div>
+</main>
 
 <script>
-/* =========================================================
-   Section configuration
-   ========================================================= */
-const CONFIG = {
-  bin: {
-    label: 'binary',
-    base: 2,
-    max: 255,                    // 1 … 255  → up to 8 bits
-    digitsRe: /^[01]+$/,
-    stripRe: /^0b/i,
-    placeholder: 'Enter binary (0s and 1s)',
-    formatHint: 'Binary uses only 0 and 1.',
-    toBase: n => n.toString(2),
-    fromBase: s => BigInt('0b' + s),
-    group: s => s.replace(/\B(?=(\d{4})+(?!\d))/g, ' ')
+/* ---------- Βοηθητικά ---------- */
+const rnd  = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const cppRound = v => v < 0 ? -Math.round(-v) : Math.round(v);
+const toFixedStr = (v,k) => Number(v).toFixed(k);
+
+/* ---------- Τράπεζες ασκήσεων ---------- */
+const BANKS = {
+
+/* ================= ΜΑΘΗΜΑ 1 ================= */
+t1: [
+  function(){
+    const n = pick(["ilikia","vathmos","arithmos","etos","poso","baros"]);
+    const v = rnd(1,99);
+    return {
+      q:`Γράψε <b>μία γραμμή κώδικα</b> που φτιάχνει μια μεταβλητή <code>int</code> με όνομα <code>${n}</code> και τιμή <b>${v}</b>.`,
+      a:`int ${n} = ${v};`
+    };
   },
-  hex: {
-    label: 'hexadecimal',
-    base: 16,
-    max: 4095,                   // 1 … 4095 → up to 3 hex digits
-    digitsRe: /^[0-9a-f]+$/i,
-    stripRe: /^0x/i,
-    placeholder: 'Enter hexadecimal (0-9, A-F)',
-    formatHint: 'Hexadecimal uses 0–9 and A–F only.',
-    toBase: n => n.toString(16).toUpperCase(),
-    fromBase: s => BigInt('0x' + s),
-    group: s => s
+  function(){
+    const items = [
+      ["την ηλικία ενός παιδιού σε χρόνια (π.χ. 9)","int","Η ηλικία είναι ακέραιος αριθμός, χωρίς δεκαδικά."],
+      ["το ύψος σε μέτρα (π.χ. 1.35)","float","Το ύψος έχει δεκαδικά, άρα θέλουμε float."],
+      ["ένα μόνο γράμμα (π.χ. 'A')","char","Ένας χαρακτήρας μπαίνει σε char με μονά εισαγωγικά."],
+      ["αν βρέχει έξω (ναι / όχι)","bool","Μόνο true ή false → bool."],
+      ["πόσα μήλα έχει το καλάθι (π.χ. 7)","int","Τα μήλα τα μετράμε με ακέραιους αριθμούς."],
+      ["το βάρος σε κιλά με δεκαδικά (π.χ. 32.5)","float","Έχει δεκαδικά → float."],
+      ["αν ένα παιδί πέρασε το τεστ (true / false)","bool","true/false → bool."],
+      ["τη θερμοκρασία 36.6","float","Δεκαδικός αριθμός → float."]
+    ];
+    const it = pick(items);
+    return {
+      q:`Ποιος <b>τύπος</b> ταιριάζει για να αποθηκεύσουμε <b>${it[0]}</b>;`,
+      a:`${it[1]}\n\n// ${it[2]}`
+    };
+  },
+  function(){
+    const opts = [
+      ["____ einaiPaidi = true;","bool","Το true/false πάει σε bool."],
+      ["____ timi = 12.5;","float","Ο δεκαδικός αριθμός πάει σε float."],
+      ["____ arithmos = 42;","int","Ο ακέραιος πάει σε int."],
+      ["____ gramma = 'K';","char","Ο ένας χαρακτήρας πάει σε char."]
+    ];
+    const o = pick(opts);
+    return {
+      q:`Συμπλήρωσε το κενό με τον σωστό τύπο:<br><pre>${esc(o[0])}</pre>`,
+      a:`${o[1]}\n\n// ${o[2]}`
+    };
+  },
+  function(){
+    const v = rnd(1,50);
+    return {
+      q:`Τι <b>λάθος</b> έχει η παρακάτω γραμμή; Πώς γράφεται σωστά;<pre>${esc(`int ilikia = ${v}`)}</pre>`,
+      a:`Λείπει το ; στο τέλος!\n\nint ilikia = ${v};\n\n// Κάθε εντολή στην C++ τελειώνει με ;`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const age = rnd(6,14);
+    const ypsos = (rnd(80,170)/100).toFixed(2);
+    const letter = pick(['A','K','M','P','T','S']);
+    const b = pick(['true','false']);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που φτιάχνει τις εξής τέσσερις μεταβλητές και τυπώνει <b>κάθε μία σε ξεχωριστή γραμμή</b>:<br>
+      <code>int ilikia = ${age};</code><br>
+      <code>float ypsos = ${ypsos};</code><br>
+      <code>char gramma = '${letter}';</code><br>
+      <code>bool einaiPaidi = ${b};</code>`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int   ilikia     = ${age};\n    float ypsos      = ${ypsos};\n    char  gramma     = '${letter}';\n    bool  einaiPaidi = ${b};\n\n    cout << ilikia     << endl;\n    cout << ypsos      << endl;\n    cout << gramma     << endl;\n    cout << einaiPaidi << endl;\n    return 0;\n}\n\n// Σημείωση: το bool τυπώνεται ως 1 (true) ή 0 (false).`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const etos = rnd(2008,2019);
+    const mithos = pick(["Μαρία","Γιώργος","Νίκος","Σοφία","Άννα","Πέτρος"]);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που φτιάχνει τις μεταβλητές <code>int etos = ${etos};</code> και <code>char arxiko = '${mithos[0]}';</code> και τυπώνει: <b>«Γεννήθηκα το ${etos}»</b> και μετά <b>«Το αρχικό μου είναι το ${mithos[0]}»</b>.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int  etos   = ${etos};\n    char arxiko = '${mithos[0]}';\n\n    cout << "Γεννήθηκα το " << etos << endl;\n    cout << "Το αρχικό μου είναι το " << arxiko << endl;\n    return 0;\n}`
+    };
   }
+],
+
+/* ================= ΜΑΘΗΜΑ 2 ================= */
+t2: [
+  function(){
+    const m = pick(["Γεια σου κόσμε!","Καλημέρα σε όλους!","Μαθαίνω C++!","Το πρώτο μου πρόγραμμα!"]);
+    return {
+      q:`Γράψε την εντολή που τυπώνει στην οθόνη το μήνυμα <b>«${m}»</b> και μετά αλλάζει γραμμή.`,
+      a:`cout << "${m}" << endl;`
+    };
+  },
+  function(){
+    const n = pick(["vathmos","ilikia","arithmos","poso","baros"]);
+    const t = pick(["int","float"]);
+    return {
+      q:`Γράψε <b>τρεις γραμμές</b>: (1) φτιάξε μεταβλητή <code>${t}</code> με όνομα <code>${n}</code>, (2) διάβασε τιμή από το πληκτρολόγιο, (3) τύπωσέ την.`,
+      a:`${t} ${n};\ncin >> ${n};\ncout << ${n} << endl;`
+    };
+  },
+  function(){
+    const v = rnd(10,99);
+    return {
+      q:`Τι θα τυπώσει το παρακάτω πρόγραμμα;<pre>${esc(`int x = ${v};\ncout << "Η τιμή είναι: " << x << endl;`)}</pre>`,
+      a:`Η τιμή είναι: ${v}\n\n// Το "Η τιμή είναι: " είναι κείμενο (σε εισαγωγικά),\n// το x τυπώνει την ΤΙΜΗ του, δηλαδή ${v}.`
+    };
+  },
+  function(){
+    const t = pick(["int","float"]);
+    return {
+      q:`Γράψε ένα <b>ολόκληρο πρόγραμμα</b> που ρωτάει τον χρήστη έναν αριθμό, τον διαβάζει σε μεταβλητή <code>${t}</code> με όνομα <code>arithmos</code> και τυπώνει «Διάβασα: » και τον αριθμό.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    ${t} arithmos;\n\n    cout << "Δώσε έναν αριθμό: ";\n    cin >> arithmos;\n\n    cout << "Διάβασα: " << arithmos << endl;\n    return 0;\n}`
+    };
+  },
+  function(){
+    const a = rnd(1,20), b = rnd(1,20);
+    return {
+      q:`Τι θα τυπώσει το παρακάτω;<pre>${esc(`int a = ${a}, b = ${b};\ncout << a << " + " << b << " = " << a + b << endl;`)}</pre>`,
+      a:`${a} + ${b} = ${a+b}\n\n// Τα κείμενα σε εισαγωγικά τυπώνονται ως έχουν,\n// και το a + b υπολογίζεται πρώτα και μετά τυπώνεται.`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>τρεις ακέραιους αριθμούς</b> και τους τυπώνει <b>ανάποδα</b> (αυτόν που διάβασε τελευταίο πρώτο).`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int a, b, c;\n\n    cout << "Δώσε τρεις αριθμούς: ";\n    cin >> a >> b >> c;\n\n    cout << c << endl;\n    cout << b << endl;\n    cout << a << endl;\n    return 0;\n}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const letter = pick(['A','B','K','M','X','Z']);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>έναν χαρακτήρα</b> (<code>char</code>) από το πληκτρολόγιο και τον τυπώνει μέσα σε μία πρόταση, π.χ. «Ο χαρακτήρας είναι: ${letter}».`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    char gramma;\n\n    cout << "Δώσε έναν χαρακτήρα: ";\n    cin >> gramma;\n\n    cout << "Ο χαρακτήρας είναι: " << gramma << endl;\n    return 0;\n}`
+    };
+  }
+],
+
+/* ================= ΜΑΘΗΜΑ 3 ================= */
+t3: [
+  function(){
+    const a = rnd(10,40), b = rnd(2,9);
+    return {
+      q:`Πόσο κάνει το <code>${a} % ${b}</code>;<br><small>Το <code>%</code> σημαίνει «τι περισσεύει από τη διαίρεση».</small>`,
+      a:`${a % b}\n\n// ${a} : ${b} = ${Math.floor(a/b)} και περισσεύουν ${a % b}`
+    };
+  },
+  function(){
+    const a = rnd(2,20), b = rnd(2,20);
+    const op = pick(["+","-","*"]);
+    const val = op === "+" ? a+b : op === "-" ? a-b : a*b;
+    return {
+      q:`Έχουμε <code>int a = ${a};</code> και <code>int b = ${b};</code><br>Γράψε μια εντολή που τυπώνει το αποτέλεσμα του <code>a ${op} b</code>.`,
+      a:`cout << a ${op} b << endl;\n\n// Θα τυπώσει: ${val}`
+    };
+  },
+  function(){
+    const a = pick([7,9,11,13,15,17]);
+    const b = pick([2,3,4]);
+    return {
+      q:`Τι θα τυπώσει το <code>${a} / ${b}</code> όταν <b>και οι δύο</b> αριθμοί είναι <code>int</code>;`,
+      a:`${Math.floor(a/b)}\n\n// Με ακεραίους η διαίρεση πετάει τα δεκαδικά!\n// ${a} / ${b} = ${(a/b).toFixed(3)} , αλλά η C++ κρατάει μόνο το ${Math.floor(a/b)}.\n// Αν ήθελες δεκαδικά: cout << ${a}.0 / ${b};`
+    };
+  },
+  /* ---- % : ΜΟΙΡΑΣΜΑ ---- */
+  function(){
+    const paidia = rnd(3,9);
+    const kar = paidia * rnd(2,6) + rnd(1,paidia-1);
+    const kathe = Math.floor(kar/paidia), per = kar % paidia;
+    return {
+      q:`Έχεις <b>${kar} καραμέλες</b> και <b>${paidia} παιδιά</b>. Γράψε <b>ολόκληρο πρόγραμμα</b> που υπολογίζει και τυπώνει:<br>
+      • πόσες καραμέλες παίρνει κάθε παιδί (<code>/</code>)<br>
+      • πόσες περισσεύουν (<code>%</code>)`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int karameles = ${kar};\n    int paidia    = ${paidia};\n\n    int kathe    = karameles / paidia;\n    int perisseuoun = karameles % paidia;\n\n    cout << "Κάθε παιδί παίρνει: " << kathe << endl;\n    cout << "Περισσεύουν: " << perisseuoun << endl;\n    return 0;\n}\n\n// ${kar} / ${paidia} = ${kathe}\n// ${kar} % ${paidia} = ${per}`
+    };
+  },
+  /* ---- % : ΔΕΥΤΕΡΟΛΕΠΤΑ ΣΕ ΩΡΕΣ / ΛΕΠΤΑ / ΔΕΥΤΕΡΟΛΕΠΤΑ ---- */
+  function(){
+    const total = rnd(60, 35999);
+    const h = Math.floor(total/3600), r1 = total % 3600, m = Math.floor(r1/60), s = r1 % 60;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν αριθμό <b>δευτερολέπτων</b> και τον μετατρέπει σε <b>ώρες, λεπτά και δευτερόλεπτα</b>.<br>
+      <small>Κλειδί: <code>3600</code> δευτερόλεπτα = 1 ώρα, <code>60</code> = 1 λεπτό. Χρησιμοποίησε <code>/</code> και <code>%</code>.<br>
+      Παράδειγμα: <b>${total}</b> δευτερόλεπτα = <b>${h} ώρες, ${m} λεπτά, ${s} δευτερόλεπτα</b>.</small>`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int synolo;\n    cout << "Δώσε δευτερόλεπτα: ";\n    cin >> synolo;\n\n    int ores     = synolo / 3600;      // πόσες ολόκληρες ώρες\n    int ypoloipo = synolo % 3600;      // ό,τι περισσεύει\n    int lepta    = ypoloipo / 60;      // πόσα ολόκληρα λεπτά\n    int deftera  = ypoloipo % 60;      // ό,τι περισσεύει\n\n    cout << ores << " ώρες, " << lepta << " λεπτά, " << deftera << " δευτερόλεπτα" << endl;\n    return 0;\n}\n\n// Για synolo = ${total}:\n// ${total} / 3600 = ${h} ώρες, περισσεύουν ${total%3600}\n// ${total%3600} / 60 = ${m} λεπτά, περισσεύουν ${s} δευτερόλεπτα`
+    };
+  },
+  /* ---- % : ΛΕΠΤΑ ΣΕ ΩΡΕΣ ---- */
+  function(){
+    const lepta = rnd(60, 900);
+    const ores = Math.floor(lepta/60), yp = lepta % 60;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>λεπτά</b> (ακέραιο) και τυπώνει σε πόσες <b>ώρες και λεπτά</b> αντιστοιχούν. Π.χ. ${lepta} λεπτά = ${ores} ώρες και ${yp} λεπτά.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int lepta;\n    cout << "Δώσε λεπτά: ";\n    cin >> lepta;\n\n    int ores = lepta / 60;\n    int ypola = lepta % 60;\n\n    cout << lepta << " λεπτά = " << ores << " ώρες και " << ypola << " λεπτά" << endl;\n    return 0;\n}\n\n// ${lepta} / 60 = ${ores} ώρες\n// ${lepta} % 60 = ${yp} λεπτά`
+    };
+  },
+  /* ---- % : ΠΟΣΕΣ ΦΟΡΕΣ ΧΩΡΑΕΙ ---- */
+  function(){
+    const a = rnd(20,90), b = rnd(3,9);
+    const pos = Math.floor(a/b), yp = a % b;
+    return {
+      q:`Δίνονται <code>int a = ${a};</code> και <code>int b = ${b};</code><br>Γράψε <b>δύο εντολές</b> που τυπώνουν: (1) πόσες φορές χωράει το <code>b</code> μέσα στο <code>a</code>, (2) πόσο περισσεύει.`,
+      a:`cout << a / b << endl;   // ${pos}\ncout << a % b << endl;   // ${yp}\n\n// ${a} = ${b} x ${pos} + ${yp}`
+    };
+  }
+],
+
+/* ================= ΜΑΘΗΜΑ 4 ================= */
+t4: [
+  function(){
+    const a = rnd(2,9), b = rnd(2,3);
+    return {
+      q:`Γράψε μια εντολή που υπολογίζει το <b>${a}<sup>${b}</sup></b> (${a} υψωμένο στη ${b}) και το τυπώνει.`,
+      a:`cout << pow(${a}, ${b}) << endl;\n\n// Αποτέλεσμα: ${Math.pow(a,b)}`
+    };
+  },
+  function(){
+    const r = rnd(2,12), n = r*r;
+    return {
+      q:`Πόσο κάνει το <code>sqrt(${n})</code>;`,
+      a:`${r}\n\n// Η sqrt βρίσκει την τετραγωνική ρίζα:\n// ${r} x ${r} = ${n}`
+    };
+  },
+  function(){
+    const num = rnd(-90,90)/10;
+    const f = pick(["round","trunc","abs"]);
+    let res, expl;
+    if (f === "round"){ res = cppRound(num); expl = "Το round πάει στον κοντινότερο ακέραιο."; }
+    else if (f === "trunc"){ res = Math.trunc(num); expl = "Το trunc απλά κόβει τα δεκαδικά (δεν κοιτάει)."; }
+    else { res = Math.abs(num); expl = "Το abs βγάζει το πρόσημο, κρατάει μόνο την απόσταση από το 0."; }
+    return {
+      q:`Πόσο κάνει το <code>${f}(${num})</code>;`,
+      a:`${res}\n\n// ${expl}`
+    };
+  },
+  function(){
+    const n = rnd(2,9), k = rnd(1,3);
+    return {
+      q:`Έχεις <code>int a = ${n};</code> και <code>int b = ${k};</code><br>Γράψε μια εντολή που τυπώνει το <code>a</code> υψωμένο στο <code>b</code>, χρησιμοποιώντας το <code>pow</code>.`,
+      a:`cout << pow(a, b) << endl;\n\n// Θα τυπώσει: ${Math.pow(n,k)}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν δεκαδικό αριθμό <code>x</code> και τυπώνει σε τρεις γραμμές: την <b>τετραγωνική του ρίζα</b>, το <b>τετράγωνό του</b> (με <code>pow</code>) και την <b>απόλυτη τιμή</b> του.`,
+      a:`#include <iostream>\n#include <cmath>\nusing namespace std;\n\nint main(){\n    float x;\n    cout << "Δώσε έναν αριθμό: ";\n    cin >> x;\n\n    cout << "Ρίζα: "      << sqrt(x)   << endl;\n    cout << "Τετράγωνο: " << pow(x, 2) << endl;\n    cout << "Απόλυτη: "   << abs(x)    << endl;\n    return 0;\n}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const n = rnd(10,99);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που παίρνει έναν ακέραιο <code>n</code> (δοσμένο ως <code>int n = ${n};</code>), υπολογίζει τη ρίζα του με <code>sqrt</code> και το τετράγωνό του με <code>pow</code> και τα τυπώνει.`,
+      a:`#include <iostream>\n#include <cmath>\nusing namespace std;\n\nint main(){\n    int n = ${n};\n\n    cout << "Ρίζα: "      << sqrt(n)   << endl;\n    cout << "Τετράγωνο: " << pow(n, 2) << endl;\n    return 0;\n}\n\n// sqrt(${n}) = ${Math.sqrt(n)}\n// pow(${n},2) = ${n*n}`
+    };
+  },
+  /* ---- round / trunc / abs σε πλήρες πρόγραμμα ---- */
+  function(){
+    const v = (rnd(-95,95)/10).toFixed(1);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που φτιάχνει <code>float x = ${v};</code> και τυπώνει σε τρεις γραμμές: <code>round(x)</code>, <code>trunc(x)</code> και <code>abs(x)</code>.`,
+      a:`#include <iostream>\n#include <cmath>\nusing namespace std;\n\nint main(){\n    float x = ${v};\n\n    cout << "round: " << round(x) << endl;   // ${cppRound(Number(v))}\n    cout << "trunc: " << trunc(x) << endl;   // ${Math.trunc(Number(v))}\n    cout << "abs: "   << abs(x)   << endl;   // ${Math.abs(Number(v))}\n    return 0;\n}`
+    };
+  }
+],
+
+/* ================= ΜΑΘΗΜΑ 5 ================= */
+t5: [
+  function(){
+    const k = rnd(1,4);
+    const v = Number((rnd(1000,99999)/1000).toFixed(3));
+    return {
+      q:`Γράψε μια εντολή που τυπώνει τον αριθμό <b>${v}</b> με <b>${k}</b> δεκαδικά ψηφία.`,
+      a:`cout << fixed << setprecision(${k}) << ${v} << endl;\n\n// Τυπώνει: ${toFixedStr(v,k)}`
+    };
+  },
+  function(){
+    const k = rnd(1,3);
+    const v = Number((rnd(100,999)/100).toFixed(2));
+    return {
+      q:`Τι θα τυπώσει το παρακάτω;<pre>${esc(`cout << fixed << setprecision(${k}) << ${v} << endl;`)}</pre>`,
+      a:`${toFixedStr(v,k)}\n\n// Με fixed, το setprecision(${k}) δίνει ΑΚΡΙΒΩΣ ${k} δεκαδικά.\n// Αν έλειπε το fixed, θα έδινε ${k} συνολικά ψηφία!`
+    };
+  },
+  function(){
+    const r = rnd(2,9), n = r*r, k = rnd(1,3);
+    return {
+      q:`Γράψε μια εντολή που υπολογίζει το <code>sqrt(${n})</code> και το τυπώνει με <b>${k}</b> δεκαδικά ψηφία.`,
+      a:`cout << fixed << setprecision(${k}) << sqrt(${n}) << endl;\n\n// Τυπώνει: ${toFixedStr(r,k)}`
+    };
+  },
+  function(){
+    const v = Number((rnd(1000,9999)/1000).toFixed(3));
+    return {
+      q:`Τι <b>λείπει</b> από το παρακάτω ώστε να τυπώσει <b>ακριβώς 2 δεκαδικά</b>;<pre>${esc(`cout << setprecision(2) << ${v} << endl;`)}</pre>`,
+      a:`Λείπει το fixed!\n\ncout << fixed << setprecision(2) << ${v} << endl;\n\n// Χωρίς το fixed, το setprecision(2) σημαίνει 2 ΣΥΝΟΛΙΚΑ ψηφία\n// και θα τύπωνε κάτι σαν: ${Number(v).toPrecision(2)}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>τρεις δεκαδικούς αριθμούς</b> και τυπώνει τον <b>μέσο όρο</b> τους με <b>2 δεκαδικά ψηφία</b>.`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    float a, b, c;\n    cout << "Δώσε τρεις αριθμούς: ";\n    cin >> a >> b >> c;\n\n    float mesos = (a + b + c) / 3;\n\n    cout << "Μέσος όρος: " << fixed << setprecision(2) << mesos << endl;\n    return 0;\n}\n\n// π.χ. αν a=4, b=5, c=6 → μέσος όρος 5.00`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const k = rnd(2,4);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει την <b>ακτίνα</b> ενός κύκλου (<code>float</code>) και τυπώνει το <b>εμβαδόν</b> του με <b>${k}</b> δεκαδικά ψηφία.<br><small>Εμβαδόν κύκλου = <code>3.14159 * r * r</code> (ή με <code>pow</code>).</small>`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    float aktina;\n    cout << "Δώσε την ακτίνα: ";\n    cin >> aktina;\n\n    float emvadon = 3.14159 * aktina * aktina;\n\n    cout << "Εμβαδόν: " << fixed << setprecision(${k}) << emvadon << endl;\n    return 0;\n}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    const a = rnd(10,90), b = rnd(10,90);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που φτιάχνει <code>int a = ${a};</code> και <code>int b = ${b};</code>, υπολογίζει το <code>a / b</code> σε <code>float</code> και το τυπώνει με <b>3 δεκαδικά ψηφία</b>.<br><small>Προσοχή στην παγίδα της διαίρεσης ακεραίων! Γράψε <code>(float)a / b</code>.</small>`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int a = ${a};\n    int b = ${b};\n\n    float apotelesma = (float)a / b;   // το (float) λέει: "κάνε τη διαίρεση με δεκαδικά"\n\n    cout << "Αποτέλεσμα: " << fixed << setprecision(3) << apotelesma << endl;\n    return 0;\n}\n\n// Τυπώνει: ${(a/b).toFixed(3)}`
+    };
+  }
+],
+
+/* ================= ΜΑΘΗΜΑ 6 ================= */
+t6: [
+  function(){
+    const a = rnd(-20,20) || 5;
+    return {
+      q:`Έχεις <code>int x = ${a};</code><br>Γράψε <code>if/else</code> που τυπώνει «Θετικός» αν το x είναι μεγαλύτερο του 0, αλλιώς «Όχι θετικός».`,
+      a:`if (x > 0) {\n    cout << "Θετικός" << endl;\n} else {\n    cout << "Όχι θετικός" << endl;\n}\n\n// Εδώ x = ${a}, άρα τυπώνει: ${a > 0 ? "Θετικός" : "Όχι θετικός"}`
+    };
+  },
+  function(){
+    const v = rnd(1,30);
+    return {
+      q:`Έχεις <code>int n = ${v};</code><br>Γράψε <code>if/else</code> που τυπώνει «Άρτιος» αν ο n διαιρείται με το 2, αλλιώς «Περιττός».`,
+      a:`if (n % 2 == 0) {\n    cout << "Άρτιος" << endl;\n} else {\n    cout << "Περιττός" << endl;\n}\n\n// ${v} % 2 = ${v%2} → ${v%2===0 ? "Άρτιος" : "Περιττός"}`
+    };
+  },
+  function(){
+    const v = rnd(1,10);
+    return {
+      q:`Έχεις <code>int vathmos = ${v};</code><br>Γράψε <code>if/else</code> που τυπώνει «Πέρασες» αν ο βαθμός είναι <b>μεγαλύτερος ή ίσος</b> του 5, αλλιώς «Κόπηκες».`,
+      a:`if (vathmos >= 5) {\n    cout << "Πέρασες" << endl;\n} else {\n    cout << "Κόπηκες" << endl;\n}\n\n// vathmos = ${v} → ${v >= 5 ? "Πέρασες" : "Κόπηκες"}`
+    };
+  },
+  function(){
+    const a = rnd(1,20), b = rnd(1,20);
+    return {
+      q:`Έχεις <code>int a = ${a};</code> και <code>int b = ${b};</code><br>Γράψε <code>if/else</code> που τυπώνει ποιος είναι <b>μεγαλύτερος</b> (ή «Ίσοι» αν είναι το ίδιο).`,
+      a:`if (a > b) {\n    cout << "Μεγαλύτερο το a" << endl;\n} else if (b > a) {\n    cout << "Μεγαλύτερο το b" << endl;\n} else {\n    cout << "Ίσοι" << endl;\n}\n\n// Εδώ: ${a > b ? "Μεγαλύτερο το a" : b > a ? "Μεγαλύτερο το b" : "Ίσοι"}`
+    };
+  },
+  function(){
+    const v = rnd(1,9);
+    return {
+      q:`Τι <b>λάθος</b> έχει το παρακάτω και πώς γράφεται σωστά;<pre>${esc(`if (x = ${v}) {\n    cout << "Ναι" << endl;\n}`)}</pre>`,
+      a:`Το = δίνει τιμή, δεν συγκρίνει! Θέλουμε ==\n\nif (x == ${v}) {\n    cout << "Ναι" << endl;\n}\n\n// Το = είναι για δήλωση: int x = 5;\n// Το == ρωτάει: «είναι ίσο;»`
+    };
+  },
+  /* ---- % ΜΕ if : ΔΙΑΙΡΕΤΟΤΗΤΑ ---- */
+  function(){
+    const v = rnd(1,50);
+    return {
+      q:`Έχεις <code>int n = ${v};</code><br>Γράψε <code>if/else</code> που τυπώνει «Διαιρείται με το 5» αν ισχύει <code>n % 5 == 0</code>, αλλιώς «Δεν διαιρείται με το 5».`,
+      a:`if (n % 5 == 0) {\n    cout << "Διαιρείται με το 5" << endl;\n} else {\n    cout << "Δεν διαιρείται με το 5" << endl;\n}\n\n// ${v} % 5 = ${v%5} → ${v%5===0 ? "Διαιρείται" : "Δεν διαιρείται"}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν ακέραιο και τυπώνει αν είναι <b>άρτιος ή περιττός</b> (χρησιμοποίησε <code>%</code>).`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int n;\n    cout << "Δώσε έναν αριθμό: ";\n    cin >> n;\n\n    if (n % 2 == 0) {\n        cout << "Άρτιος" << endl;\n    } else {\n        cout << "Περιττός" << endl;\n    }\n    return 0;\n}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει δύο ακεραίους και τυπώνει τον <b>μεγαλύτερο</b> από τους δύο.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int a, b;\n    cout << "Δώσε δύο αριθμούς: ";\n    cin >> a >> b;\n\n    if (a > b) {\n        cout << "Μεγαλύτερος: " << a << endl;\n    } else if (b > a) {\n        cout << "Μεγαλύτερος: " << b << endl;\n    } else {\n        cout << "Είναι ίσοι!" << endl;\n    }\n    return 0;\n}`
+    };
+  },
+  /* ---- ΑΣΚΗΣΗ ΜΕ ΟΛΟΚΛΗΡΟ ΠΡΟΓΡΑΜΜΑ ---- */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν <b>βαθμό</b> (ακέραιο) και τυπώνει:<br>
+      • «Πέρασες 🎉» αν είναι <code>&gt;= 5</code><br>
+      • «Κόπηκες 💪» αλλιώς`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int vathmos;\n    cout << "Δώσε βαθμό: ";\n    cin >> vathmos;\n\n    if (vathmos >= 5) {\n        cout << "Πέρασες 🎉" << endl;\n    } else {\n        cout << "Κόπηκες 💪" << endl;\n    }\n    return 0;\n}`
+    };
+  }
+],
+
+/* ================= ΤΕΛΙΚΗ ΠΡΟΚΛΗΣΗ ================= */
+t7: [
+  /* 1. Δευτερόλεπτα → ώρες/λεπτά/δευτερόλεπτα με % */
+  function(){
+    const total = rnd(3600, 89999);
+    const h = Math.floor(total/3600), r1 = total % 3600, m = Math.floor(r1/60), s = r1 % 60;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν αριθμό <b>δευτερολέπτων</b> (ακέραιο) και τον μετατρέπει σε <b>ώρες, λεπτά και δευτερόλεπτα</b>.<br>
+      <small>Χρησιμοποίησε <code>/</code> και <code>%</code>. Π.χ. ${total} δευτ. = ${h} ώρες, ${m} λεπτά, ${s} δευτ.</small>`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int synolo;\n    cout << "Δώσε δευτερόλεπτα: ";\n    cin >> synolo;\n\n    int ores     = synolo / 3600;\n    int ypoloipo = synolo % 3600;\n    int lepta    = ypoloipo / 60;\n    int deftera  = ypoloipo % 60;\n\n    cout << synolo << " δευτερόλεπτα = ";\n    cout << ores << " ώρες, " << lepta << " λεπτά, " << deftera << " δευτερόλεπτα" << endl;\n    return 0;\n}\n\n// Για ${total}:\n// ${total}/3600 = ${h}, περισσεύουν ${total%3600}\n// ${total%3600}/60 = ${m}, περισσεύουν ${s}`
+    };
+  },
+  /* 2. Δευτερόλεπτα → ώρες ως δεκαδικός (2 δεκαδικά) */
+  function(){
+    const total = rnd(60, 35999);
+    const ores = total/3600;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>δευτερόλεπτα</b> και τυπώνει σε <b>πόσες ώρες</b> αντιστοιχούν, με <b>2 δεκαδικά ψηφία</b>. Π.χ. ${total} δευτ. = ${toFixedStr(ores,2)} ώρες.`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int synolo;\n    cout << "Δώσε δευτερόλεπτα: ";\n    cin >> synolo;\n\n    float ores = synolo / 3600.0;   // το 3600.0 κάνει τη διαίρεση δεκαδική!\n\n    cout << "Ώρες: " << fixed << setprecision(2) << ores << endl;\n    return 0;\n}\n\n// ${total} / 3600.0 = ${toFixedStr(ores,2)}`
+    };
+  },
+  /* 3. Λεπτά → ώρες και λεπτά με % */
+  function(){
+    const lepta = rnd(60, 1500);
+    const ores = Math.floor(lepta/60), yp = lepta % 60;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>λεπτά</b> και τυπώνει «X ώρες και Y λεπτά». Π.χ. ${lepta} λεπτά = ${ores} ώρες και ${yp} λεπτά.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int lepta;\n    cout << "Δώσε λεπτά: ";\n    cin >> lepta;\n\n    int ores = lepta / 60;\n    int ypola = lepta % 60;\n\n    cout << lepta << " λεπτά = " << ores << " ώρες και " << ypola << " λεπτά" << endl;\n    return 0;\n}\n\n// ${lepta}/60 = ${ores} ώρες, ${lepta}%60 = ${yp} λεπτά`
+    };
+  },
+  /* 4. Λεπτά → ευρώ και λεπτά */
+  function(){
+    const cents = rnd(100, 9999);
+    const euros = Math.floor(cents/100), l = cents % 100;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει ένα ποσό σε <b>λεπτά του ευρώ</b> (ακέραιο) και τυπώνει πόσα <b>ευρώ και λεπτά</b> είναι. Π.χ. ${cents} λεπτά = ${euros} € και ${l} λεπτά.`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int lepta;\n    cout << "Δώσε λεπτά του ευρώ: ";\n    cin >> lepta;\n\n    int evro = lepta / 100;\n    int ypoloipaLepta = lepta % 100;\n\n    cout << lepta << " λεπτά = " << evro << " ευρώ και " << ypoloipaLepta << " λεπτά" << endl;\n    return 0;\n}\n\n// ${cents}/100 = ${euros} €, ${cents}%100 = ${l} λεπτά`
+    };
+  },
+  /* 5. Μέσος όρος 3 + αν πέρασε */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>τρεις βαθμούς</b> (ακέραιους), υπολογίζει τον μέσο όρο και:<br>
+      • τυπώνει τον μέσο όρο με <b>2 δεκαδικά</b><br>
+      • αν ο μέσος όρος είναι <code>&gt;= 5</code> τυπώνει «Πέρασες», αλλιώς «Κόπηκες».`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int a, b, c;\n    cout << "Δώσε τρεις βαθμούς: ";\n    cin >> a >> b >> c;\n\n    float mesos = (a + b + c) / 3.0;\n\n    cout << "Μέσος όρος: " << fixed << setprecision(2) << mesos << endl;\n\n    if (mesos >= 5) {\n        cout << "Πέρασες" << endl;\n    } else {\n        cout << "Κόπηκες" << endl;\n    }\n    return 0;\n}`
+    };
+  },
+  /* 6. Άρτιος → μισό με 1 δεκαδικό / Περιττός → τριπλάσιο */
+  function(){
+    const n = rnd(1, 50);
+    const half = (n/2).toFixed(1), trip = n*3;
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν ακέραιο <code>n</code>. Αν είναι <b>άρτιος</b>, τυπώνει το <b>μισό</b> του με 1 δεκαδικό ψηφίο. Αν είναι <b>περιττός</b>, τυπώνει το <b>τριπλάσιό</b> του.`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int n;\n    cout << "Δώσε έναν αριθμό: ";\n    cin >> n;\n\n    if (n % 2 == 0) {\n        float miso = n / 2.0;\n        cout << "Το μισό είναι: " << fixed << setprecision(1) << miso << endl;\n    } else {\n        cout << "Το τριπλάσιο είναι: " << n * 3 << endl;\n    }\n    return 0;\n}\n\n// Αν n = ${n} (${n%2===0?"άρτιος":"περιττός"}) → ${n%2===0 ? half : trip}`
+    };
+  },
+  /* 7. Διαιρείται με 2 ΚΑΙ με 3 (χρήση % 6) */
+  function(){
+    const n = rnd(1, 60);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει έναν ακέραιο και τυπώνει αν διαιρείται <b>και με το 2 και με το 3</b>.<br><small>Κόλπο: ένας αριθμός διαιρείται και με το 2 και με το 3 αν <code>n % 6 == 0</code>.</small>`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int n;\n    cout << "Δώσε έναν αριθμό: ";\n    cin >> n;\n\n    if (n % 6 == 0) {\n        cout << "Διαιρείται και με το 2 και με το 3" << endl;\n    } else {\n        cout << "Δεν διαιρείται και με τα δύο" << endl;\n    }\n    return 0;\n}\n\n// ${n} % 6 = ${n%6} → ${n%6===0 ? "Διαιρείται" : "Δεν διαιρείται"}`
+    };
+  },
+  /* 8. pow + iomanip + if */
+  function(){
+    const b = rnd(2,6), e = rnd(2,4);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει δύο ακεραίους <code>b</code> (βάση) και <code>e</code> (εκθέτη). Αν ο εκθέτης είναι <b>θετικός</b>, τυπώνει το <code>pow(b, e)</code> με <b>1 δεκαδικό</b>. Αλλιώς τυπώνει «Ο εκθέτης πρέπει να είναι θετικός».`,
+      a:`#include <iostream>\n#include <cmath>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int b, e;\n    cout << "Δώσε βάση και εκθέτη: ";\n    cin >> b >> e;\n\n    if (e > 0) {\n        cout << "Δύναμη: " << fixed << setprecision(1) << pow(b, e) << endl;\n    } else {\n        cout << "Ο εκθέτης πρέπει να είναι θετικός" << endl;\n    }\n    return 0;\n}\n\n// π.χ. b=${b}, e=${e} → ${Math.pow(b,e).toFixed(1)}`
+    };
+  },
+  /* 9. Έκπτωση με if + iomanip */
+  function(){
+    const timi = rnd(50, 300);
+    const ekpt = rnd(5, 60);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει μια <b>τιμή</b> (float) και ένα <b>ποσοστό έκπτωσης</b> (ακέραιο). Υπολογίζει την τελική τιμή και την τυπώνει με <b>2 δεκαδικά</b>. Αν η έκπτωση είναι <b>πάνω από 50%</b>, τυπώνει και «Μεγάλη έκπτωση!».`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    float timi;\n    int ekptosi;\n\n    cout << "Δώσε τιμή και έκπτωση %: ";\n    cin >> timi >> ekptosi;\n\n    float teliki = timi - timi * ekptosi / 100;\n\n    cout << "Τελική τιμή: " << fixed << setprecision(2) << teliki << endl;\n\n    if (ekptosi > 50) {\n        cout << "Μεγάλη έκπτωση!" << endl;\n    }\n    return 0;\n}\n\n// π.χ. τιμή ${timi}, έκπτωση ${ekpt}% → ${(timi - timi*ekpt/100).toFixed(2)}`
+    };
+  },
+  /* 10. Πόσοι θετικοί από 3 */
+  function(){
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει <b>τρεις ακεραίους</b> και τυπώνει <b>πόσοι από αυτούς είναι θετικοί</b> (μεγαλύτεροι του 0).<br><small>Χρησιμοποίησε τρία <code>if</code> και μια μεταβλητή-μετρητή.</small>`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int a, b, c;\n    cout << "Δώσε τρεις αριθμούς: ";\n    cin >> a >> b >> c;\n\n    int metritis = 0;\n\n    if (a > 0) metritis = metritis + 1;\n    if (b > 0) metritis = metritis + 1;\n    if (c > 0) metritis = metritis + 1;\n\n    cout << "Θετικοί: " << metritis << endl;\n    return 0;\n}`
+    };
+  },
+  /* 11. Ορθογώνιο: εμβαδόν, περίμετρος, τετράγωνο; */
+  function(){
+    const w = rnd(2, 15), h = rnd(2, 15);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει το <b>πλάτος</b> και το <b>ύψος</b> ενός ορθογωνίου (ακέραιοι) και τυπώνει: το <b>εμβαδόν</b>, την <b>περίμετρο</b> και αν είναι <b>τετράγωνο</b> («Ναι, είναι τετράγωνο» ή «Όχι, δεν είναι τετράγωνο»).`,
+      a:`#include <iostream>\nusing namespace std;\n\nint main(){\n    int platos, ypsos;\n    cout << "Δώσε πλάτος και ύψος: ";\n    cin >> platos >> ypsos;\n\n    int emvadon    = platos * ypsos;\n    int perimetros = 2 * (platos + ypsos);\n\n    cout << "Εμβαδόν: "     << emvadon    << endl;\n    cout << "Περίμετρος: "  << perimetros << endl;\n\n    if (platos == ypsos) {\n        cout << "Ναι, είναι τετράγωνο" << endl;\n    } else {\n        cout << "Όχι, δεν είναι τετράγωνο" << endl;\n    }\n    return 0;\n}\n\n// Για ${w} x ${h}: εμβαδόν ${w*h}, περίμετρος ${2*(w+h)} → ${w===h ? "τετράγωνο" : "όχι τετράγωνο"}`
+    };
+  },
+  /* 12. Διαίρεση με δεκαδικά + υπόλοιπο */
+  function(){
+    const a = rnd(10, 99), b = rnd(3, 9);
+    return {
+      q:`Γράψε <b>ολόκληρο πρόγραμμα</b> που διαβάζει δύο ακεραίους <code>a</code> και <code>b</code> και τυπώνει:<br>
+      • το <b>ακέραιο πηλίκο</b> (<code>a / b</code>)<br>
+      • το <b>υπόλοιπο</b> (<code>a % b</code>)<br>
+      • το <b>δεκαδικό πηλίκο</b> με <b>3 δεκαδικά ψηφία</b> (χρησιμοποίησε <code>(float)a / b</code>)`,
+      a:`#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main(){\n    int a, b;\n    cout << "Δώσε δύο αριθμούς: ";\n    cin >> a >> b;\n\n    cout << "Ακέραιο πηλίκο: "    << a / b << endl;\n    cout << "Υπόλοιπο: "          << a % b << endl;\n    cout << "Δεκαδικό πηλίκο: "   << fixed << setprecision(3) << (float)a / b << endl;\n    return 0;\n}\n\n// Για a=${a}, b=${b}: ${Math.floor(a/b)}, ${a%b}, ${(a/b).toFixed(3)}`
+    };
+  }
+]
+
 };
 
-const ICON_CHECK = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-const ICON_CROSS = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
+/* ---------- Δημιουργία άσκησης ---------- */
+function createExercise(gen){
+  const card = document.createElement('div');
+  card.className = 'ex';
+  card.innerHTML = `
+    <span class="ex-label">ΑΣΚΗΣΗ</span>
+    <div class="ex-body"></div>
+    <div class="ex-actions">
+      <button class="btn small show-btn">💡 Δείξε μου τη λύση</button>
+      <button class="btn small new-btn">🔄 Νέα άσκηση</button>
+    </div>
+    <pre class="ex-answer hidden"></pre>`;
 
-/* =========================================================
-   Exercise engine
-   ========================================================= */
-function setupExercise(key) {
-  const cfg  = CONFIG[key];
-  const root = document.querySelector(`.exercise[data-type="${key}"]`);
+  const body = card.querySelector('.ex-body');
+  const ans  = card.querySelector('.ex-answer');
+  const showBtn = card.querySelector('.show-btn');
 
-  const promptEl   = root.querySelector('.prompt');
-  const inputEl    = root.querySelector('.answer-input');
-  const wrapEl     = root.querySelector('.input-wrap');
-  const iconEl     = root.querySelector('.status-icon');
-  const checkBtn   = root.querySelector('.check-btn');
-  const newBtn     = root.querySelector('.new-btn');
-  const feedbackEl = root.querySelector('.feedback');
-
-  let direction = 'toDec';   // 'toDec' | 'toBase'
-  let value     = null;      // BigInt
-  let answered  = false;
-
-  /* ---------- helpers ---------- */
-  function clearFeedback() {
-    feedbackEl.className = 'feedback';
-    feedbackEl.innerHTML = '';
-    inputEl.classList.remove('invalid');
+  function fill(){
+    const e = gen();
+    body.innerHTML = e.q;
+    ans.textContent = e.a;
+    ans.classList.add('hidden');
+    showBtn.textContent = '💡 Δείξε μου τη λύση';
   }
 
-  function showFormatWarning(msg) {
-    inputEl.classList.add('invalid');
-    feedbackEl.className = 'feedback warn';
-    feedbackEl.innerHTML = `<div class="msg">${msg}</div>`;
-    inputEl.focus();
-  }
-
-  /* ---------- new question (infinite) ---------- */
-  function newQuestion() {
-    direction = Math.random() < 0.5 ? 'toDec' : 'toBase';
-
-    let next;
-    do {
-      next = BigInt(1 + Math.floor(Math.random() * cfg.max));
-    } while (value !== null && next === value);
-    value = next;
-
-    answered = false;
-
-    if (direction === 'toDec') {
-      const shown = cfg.group(cfg.toBase(value));
-      promptEl.innerHTML =
-        `Convert <span class="num">${shown}</span><sub>${cfg.base}</sub> to <strong>decimal</strong>`;
-      inputEl.placeholder = 'Enter a decimal number';
-    } else {
-      promptEl.innerHTML =
-        `Convert <span class="num">${value.toString(10)}</span><sub>10</sub> to <strong>${cfg.label}</strong>`;
-      inputEl.placeholder = cfg.placeholder;
-    }
-
-    inputEl.value = '';
-    inputEl.readOnly = false;
-    wrapEl.classList.remove('ok', 'bad');
-    iconEl.className = 'status-icon';
-
-    checkBtn.disabled = false;
-    checkBtn.textContent = 'Check';
-
-    newBtn.classList.remove('pulse');
-    newBtn.textContent = 'New question';
-
-    clearFeedback();
-
-    if (root.offsetParent !== null) inputEl.focus();
-  }
-
-  /* ---------- checking ---------- */
-  function check() {
-    if (answered) return;
-
-    const raw = inputEl.value
-      .trim()
-      .replace(/[\s_]/g, '')
-      .replace(cfg.stripRe, '');
-
-    if (!raw) {
-      showFormatWarning('Type an answer first.');
-      return;
-    }
-
-    if (direction === 'toDec') {
-      if (!/^\d+$/.test(raw)) {
-        showFormatWarning('Use decimal digits 0–9 only.');
-        return;
-      }
-    } else {
-      if (!cfg.digitsRe.test(raw)) {
-        showFormatWarning(cfg.formatHint);
-        return;
-      }
-    }
-
-    const userValue = direction === 'toDec' ? BigInt(raw) : cfg.fromBase(raw);
-    const isCorrect = userValue === value;
-
-    answered = true;
-
-    // lock the question
-    inputEl.readOnly = true;
-    checkBtn.disabled = true;
-    checkBtn.textContent = 'Checked';
-    newBtn.classList.add('pulse');
-    newBtn.textContent = 'Next question →';
-
-    if (isCorrect) {
-      /* ---- GREEN TICK ---- */
-      iconEl.className = 'status-icon ok';
-      wrapEl.classList.add('ok');
-      feedbackEl.className = 'feedback ok';
-      feedbackEl.innerHTML = `<div class="msg">${ICON_CHECK} Correct!</div>`;
-    } else {
-      /* ---- RED X + correct answer below ---- */
-      const correctAnswer = direction === 'toDec'
-        ? value.toString(10)
-        : cfg.toBase(value);
-
-      const suffix = direction === 'toDec' ? '' : `<sub>${cfg.base}</sub>`;
-
-      iconEl.className = 'status-icon bad';
-      wrapEl.classList.add('bad');
-      feedbackEl.className = 'feedback bad';
-      feedbackEl.innerHTML = `
-        <div class="msg">${ICON_CROSS} Not quite.</div>
-        <div class="answer-line">
-          Correct answer: <code>${correctAnswer}</code>${suffix}
-        </div>`;
-    }
-
-    newBtn.focus();
-  }
-
-  /* ---------- events ---------- */
-  checkBtn.addEventListener('click', check);
-  newBtn.addEventListener('click', newQuestion);
-
-  inputEl.addEventListener('input', () => {
-    if (feedbackEl.classList.contains('warn')) clearFeedback();
+  showBtn.addEventListener('click', () => {
+    ans.classList.toggle('hidden');
+    showBtn.textContent = ans.classList.contains('hidden')
+      ? '💡 Δείξε μου τη λύση'
+      : '🙈 Κρύψε τη λύση';
   });
 
-  inputEl.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    if (answered) newQuestion();
-    else check();
-  });
+  card.querySelector('.new-btn').addEventListener('click', fill);
 
-  // first question
-  newQuestion();
+  fill();
+  return card;
 }
 
-/* =========================================================
-   Collapsible sidebar groups (works for nested groups too)
-   ========================================================= */
-document.querySelectorAll('.nav-group').forEach(group => {
-  const head = group.querySelector(':scope > .nav-group-head');
-  if (!head) return;
+/* ---------- Γέμισμα όλων των τραπεζών ---------- */
+const EXERCISES_PER_SECTION = 4;   // πόσες ασκήσεις εμφανίζονται κάθε φορά
 
-  head.addEventListener('click', () => {
-    const isOpen = group.classList.toggle('is-open');
-    head.setAttribute('aria-expanded', String(isOpen));
-  });
+document.querySelectorAll('.ex-wrap').forEach(wrap => {
+  const bank = BANKS[wrap.dataset.bank];
+  if (!bank) return;
+  const count = Math.min(bank.length, EXERCISES_PER_SECTION);
+  const chosen = [...bank].sort(() => Math.random() - 0.5).slice(0, count);
+  chosen.forEach(gen => wrap.appendChild(createExercise(gen)));
 });
 
-/* =========================================================
-   Sidebar navigation
-   ========================================================= */
-const navItems = document.querySelectorAll('.nav-item[data-section]');
-const panels   = document.querySelectorAll('.panel');
-
-navItems.forEach(btn => {
+/* ---------- Πλοήγηση ---------- */
+const navBtns = document.querySelectorAll('.nav-btn');
+navBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    const section = btn.dataset.section;
+    navBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
 
-    navItems.forEach(b => b.classList.toggle('is-active', b === btn));
-    panels.forEach(p => p.classList.toggle('is-active', p.id === 'panel-' + section));
+    document.querySelectorAll('.topic').forEach(t => t.classList.remove('active'));
+    document.getElementById(btn.dataset.target).classList.add('active');
 
-    const input = document.querySelector(`#panel-${section} .answer-input`);
-    if (input && !input.readOnly) input.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
-
-/* =========================================================
-   Boot
-   ========================================================= */
-setupExercise('bin');
-setupExercise('hex');
 </script>
 
 </body>
